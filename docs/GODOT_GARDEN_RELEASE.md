@@ -64,3 +64,14 @@ completed in a 640x480 iframe. Public listing propagation and platform review
 are separate from submission. The release ZIP is checked into releases/.
 Dashboard: https://my.gamepix.com/games/pawzzle-maze-mocha-s-garden
 
+
+## Checklist and movement clarity update
+
+Objective rows now display bone, key and doghouse sprites beside drawn checkbox
+icons, with green completed states. Movement buttons use drawn arrows and
+Up/Left/Down/Right labels in a directional pad, avoiding missing font glyphs.
+Validated in the web export: direction-button click moves Mocha; collecting two
+bones and the key checks and highlights their matching rows. All 47 existing
+integration assertions pass. Godot's headless teardown reports a resource-in-use
+warning; the browser game renders and runs correctly.
+

@@ -15,7 +15,11 @@ var size_select: OptionButton
 var seed_input: LineEdit
 var stats: Label
 var status: Label
-var checklist: Label
+var objective_rows: Array = []
+var objective_checks: Array = []
+var objective_labels: Array = []
+var checked_icon: Texture2D
+var unchecked_icon: Texture2D
 var result: Label
 var sound: Button
 var undo_button: Button
@@ -65,6 +69,18 @@ func button(text: String, action: Callable, primary: bool = false) -> Button:
 	node.add_theme_color_override("font_hover_color", Color.WHITE if primary else Color("#174f50"))
 	node.pressed.connect(action)
 	return node
+
+func _svg_icon(body: String) -> Texture2D:
+	var image := Image.new()
+	image.load_svg_from_string('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">' + body + '</svg>')
+	return ImageTexture.create_from_image(image)
+
+func _arrow_icon(direction: Vector2i) -> Texture2D:
+	var angle := 0
+	if direction == Vector2i.RIGHT: angle = 90
+	elif direction == Vector2i.DOWN: angle = 180
+	elif direction == Vector2i.LEFT: angle = 270
+	return _svg_icon('<path transform="rotate(%d 12 12)" d="M12 3 3 12h6v9h6v-9h6z" fill="#174f50"/>' % angle)
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -153,15 +169,39 @@ func _ready() -> void:
 	toolbar.add_child(undo_button)
 	toolbar.add_child(button("Restart", restart))
 	toolbar.add_child(button("Hint", show_hint, true))
-	var directions := HBoxContainer.new()
-	directions.alignment = BoxContainer.ALIGNMENT_CENTER
-	directions.add_theme_constant_override("separation", 8)
-	play_panel.add_child(directions)
-	for entry in [["←", Vector2i.LEFT], ["↑", Vector2i.UP], ["↓", Vector2i.DOWN], ["→", Vector2i.RIGHT]]:
+	var movement_title := label("MOVE MOCHA", 14)
+	movement_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	play_panel.add_child(movement_title)
+	var directions_center := CenterContainer.new()
+	play_panel.add_child(directions_center)
+	var directions := GridContainer.new()
+	directions.columns = 3
+	directions.add_theme_constant_override("h_separation", 8)
+	directions.add_theme_constant_override("v_separation", 6)
+	directions_center.add_child(directions)
+	for entry in [["", Vector2i.ZERO], ["Up", Vector2i.UP], ["", Vector2i.ZERO], ["Left", Vector2i.LEFT], ["Down", Vector2i.DOWN], ["Right", Vector2i.RIGHT]]:
+		if entry[0] == "":
+			directions.add_child(Control.new())
+			continue
 		var direction: Vector2i = entry[1]
 		var control := button(entry[0], func(): move_direction(direction))
-		control.custom_minimum_size.x = 48
+		control.name = "Move" + entry[0]
+		control.icon = _arrow_icon(direction)
+		control.expand_icon = true
+		control.add_theme_constant_override("icon_max_width", 20)
+		control.add_theme_font_size_override("font_size", 14)
+		for appearance in ["normal", "hover", "pressed"]:
+			var compact := control.get_theme_stylebox(appearance).duplicate() as StyleBoxFlat
+			compact.content_margin_left = 8
+			compact.content_margin_right = 8
+			control.add_theme_stylebox_override(appearance, compact)
+		control.custom_minimum_size = Vector2(82, 48)
+		control.focus_mode = Control.FOCUS_NONE
+		control.tooltip_text = "Move Mocha " + entry[0].to_lower()
 		directions.add_child(control)
+	var movement_help := label("Click a direction, use arrow keys / WASD, or tap an open neighbouring tile.", 13)
+	movement_help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	play_panel.add_child(movement_help)
 	objectives_panel = panel()
 	objectives_panel.custom_minimum_size.x = 230
 	layout.add_child(objectives_panel)
@@ -169,8 +209,33 @@ func _ready() -> void:
 	objectives.add_theme_constant_override("separation", 18)
 	objectives_panel.add_child(objectives)
 	objectives.add_child(label("YOUR ROUTE CHECKLIST", 17))
-	checklist = label("", 17)
-	objectives.add_child(checklist)
+	checked_icon = _svg_icon('<rect x="2" y="2" width="20" height="20" rx="5" fill="#229c7a"/><path d="m6 12 4 4 8-9" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>')
+	unchecked_icon = _svg_icon('<rect x="2" y="2" width="20" height="20" rx="5" fill="#fff9e9" stroke="#8ca89c" stroke-width="2"/>')
+	for entry in [["bone", "Bone 1"], ["bone", "Bone 2"], ["bone", "Bone 3"], ["key", "Golden key"], ["dog_house", "Return home"]]:
+		var row := PanelContainer.new()
+		row.add_theme_stylebox_override("panel", style("#f1e6cc", 12))
+		objectives.add_child(row)
+		objective_rows.append(row)
+		var items := HBoxContainer.new()
+		items.add_theme_constant_override("separation", 8)
+		row.add_child(items)
+		var check := TextureRect.new()
+		check.texture = unchecked_icon
+		check.custom_minimum_size = Vector2(22, 22)
+		check.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		check.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		items.add_child(check)
+		objective_checks.append(check)
+		var sprite := TextureRect.new()
+		sprite.texture = load("res://Sprites/textures/" + entry[0] + ".png")
+		sprite.custom_minimum_size = Vector2(38, 38)
+		sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		items.add_child(sprite)
+		var caption := label(entry[1], 15)
+		caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		items.add_child(caption)
+		objective_labels.append(caption)
 	status = label("", 15)
 	objectives.add_child(status)
 	objectives.add_child(label("THE FEWEST MOVES WIN\n\nTake your time. Hints mark the attempt as assisted; assisted runs do not replace your personal best.", 14))
@@ -318,10 +383,11 @@ func refresh() -> void:
 	for i in 3:
 		if state.mask & (1 << i): count += 1
 	stats.text = "%d × %d  /  %s\n%d moves   ·   Best %s   ·   %d/3 bones" % [level.size, level.size, level.seed, state.moves, str(saves.bests.get(best_key(), "—")), count]
-	checklist.text = ""
-	for i in 3:
-		checklist.text += ("%s  Find bone %d\n\n" % ["[x]" if state.mask & (1 << i) else "[ ]", i + 1])
-	checklist.text += "%s  Find the golden key\n\n%s  Return home" % ["[x]" if state.key else "[ ]", "[x]" if rules.won(level, state) else "[ ]"]
+	for i in 5:
+		var complete: bool = bool(state.mask & (1 << i)) if i < 3 else bool(state.key) if i == 3 else rules.won(level, state)
+		objective_checks[i].texture = checked_icon if complete else unchecked_icon
+		objective_rows[i].add_theme_stylebox_override("panel", style("#dcefdc" if complete else "#f1e6cc", 12))
+		objective_rows[i].tooltip_text = "Completed" if complete else "Still to collect" if i < 4 else "Collect the bones and key, then reach home"
 	undo_button.disabled = history.is_empty()
 	board.show_board(level, state, history, hint_cell)
 
