@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://coyxdyxeqhr8x"]
+
+[ext_resource type="Script" uid="uid://diju647j2w44o" path="res://garden/main.gd" id="1_yisjc"]
+
+[node name="Garden" type="Control" unique_id=197113276]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_yisjc")

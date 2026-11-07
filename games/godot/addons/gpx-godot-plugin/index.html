@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Pawzzle Maze</title>
+<title>Pawzzle Maze - Mocha's Garden</title>
 <style>
 html,body {margin:0;width:100%;height:100%;overflow:hidden;background:#ecf0e6;touch-action:none;font-family:system-ui,sans-serif}
 #canvas {display:block;width:100%;height:100%;outline:none;touch-action:none}
@@ -14,7 +14,7 @@ html,body {margin:0;width:100%;height:100%;overflow:hidden;background:#ecf0e6;to
 $GODOT_HEAD_INCLUDE
 </head>
 <body>
-<canvas id="canvas" tabindex="0" aria-label="Pawzzle Maze game. Guide the dog to the house using arrow keys or dragging."></canvas>
+<canvas id="canvas" tabindex="0" aria-label="Pawzzle Maze game. Collect three bones and the key, then reach home using arrow keys, WASD, or adjacent tile taps."></canvas>
 <div id="loading" role="status"><h1>Pawzzle Maze</h1><progress id="progress" max="100" value="0"></progress><div id="status">Preparing your garden maze…</div><button id="retry" hidden onclick="location.reload()">Try again</button></div>
 <script>window.GamePixConfig = {lifecycle: 'manual'};</script>
 <script src="https://integration.gamepix.com/sdk/v3/gamepix.sdk.js"></script>
@@ -88,3 +88,4 @@ engine.startGame({onProgress(current,total) {
 </script>
 </body>
 </html>
+
