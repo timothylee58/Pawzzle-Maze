@@ -1,5 +1,7 @@
 # Pawzzle Maze
 
+**New to the repository?** Read the [file guide and complete appendix](FILE_GUIDE.md). Frankie's task notes and starting points are in [Frankie/README.md](Frankie/README.md).
+
 A route-planning dog adventure built with Three.js, a shared deterministic game core, and an optional Fastify/SQLite API. A separate Godot project contains the earlier maze demo.
 
 ## Recent update — V3 adventure
