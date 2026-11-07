@@ -174,3 +174,8 @@ Web evidence: garden-compact-controls.jpg.
 - 2,254 integration checks pass, including full-grid fit at 1280x900,
   640x480, 390x844 and 320x640, all grid sizes, touch input and popup controls.
 - Godot MCP native run reports no errors. Minimum-step solver is unchanged.
+
+Final fit-screen build: 3Lmnnedz4yWPw96t7BHSUA5MS3t (12,881,091 bytes).
+GamePix confirmed resubmission on 8 November 2026. The public jam page is
+available again. Mobile refinement aligns the board directly below arrows
+and uses compact checklist padding with readable text.
