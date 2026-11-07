@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cqhrbo2b50pci"]
+
+[ext_resource type="Script" uid="uid://bsycwe26otioe" path="res://Sprites/generate_sprites.gd" id="1_ns8ik"]
+
+[node name="GenerateSprites" type="Node" unique_id=235660099]
+script = ExtResource("1_ns8ik")

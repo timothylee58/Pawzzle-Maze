@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://ejpl6ofkg3r2"]
+
+[ext_resource type="Texture2D" uid="uid://b2tcdjlw73j5f" path="res://Sprites/atlas/golden_treat.tres" id="1_71l1j"]
+
+[node name="GoldenTreat" type="Node2D" unique_id=1104933122]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=964254000]
+texture_filter = 2
+texture = ExtResource("1_71l1j")

@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://4t0hhlvnr2iv"]
+
+[ext_resource type="Texture2D" uid="uid://deuc4gsb1oulm" path="res://Sprites/atlas/tennis_ball.tres" id="1_hnyfx"]
+
+[node name="TennisBall" type="Node2D" unique_id=1715056632]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=654299330]
+texture_filter = 2
+texture = ExtResource("1_hnyfx")

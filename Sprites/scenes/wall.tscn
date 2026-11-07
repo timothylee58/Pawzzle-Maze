@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://dt1cn1lwk6i0d"]
+
+[ext_resource type="Texture2D" uid="uid://sojiblxco4fc" path="res://Sprites/atlas/wall.tres" id="1_j43mm"]
+
+[node name="Wall" type="Node2D" unique_id=438223488]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=694047358]
+texture_filter = 2
+texture = ExtResource("1_j43mm")
