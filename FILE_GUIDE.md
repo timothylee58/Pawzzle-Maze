@@ -173,3 +173,10 @@ Keep working game code in its existing project folders so imports and builds con
 | [Marketing_1080x1350_01.png](assets/replicate/marketing/Marketing_1080x1350_01.png) | Original marketing image, 1080 × 1350.          |
 | [Marketing_1080x1350_02.png](assets/replicate/marketing/Marketing_1080x1350_02.png) | Original marketing image, 1080 × 1350.          |
 | [Marketing_1360x850_01.png](assets/replicate/marketing/Marketing_1360x850_01.png)   | Original marketing image, 1360 × 850.           |
+
+### Opening audio import — November 7, 2026
+
+| File | Purpose |
+| --- | --- |
+| [Assets/Mocha-Opening-Gameplay-Preview.mp3](Assets/Mocha-Opening-Gameplay-Preview.mp3) | Original opening/gameplay audio, referenced by the garden HTML demo. |
+| [docs/AUDIO_ASSETS.md](docs/AUDIO_ASSETS.md) | Audio metadata, checksum and current integration scope. |

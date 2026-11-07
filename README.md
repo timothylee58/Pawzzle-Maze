@@ -139,3 +139,7 @@ Retained/ordered items, keys and levers are implemented in the shared rules but 
 ## Art and marketing assets
 
 The [Replicate asset drop](assets/replicate/README.md) contains 12 game PNGs and 4 marketing PNGs imported from the team’s Drive folder. Originals are organized under `assets/replicate/game/` and `assets/replicate/marketing/`, with source links and checksums in the manifest. These files are available for integration; they are not yet wired into any game renderer.
+
+## Opening soundtrack
+
+[Mocha-Opening-Gameplay-Preview.mp3](Assets/Mocha-Opening-Gameplay-Preview.mp3) is the original 50-second audio preview supplied for the game. The garden HTML demo already references this file and starts music after player interaction. See [audio asset details](docs/AUDIO_ASSETS.md) for format, checksum and integration scope.
