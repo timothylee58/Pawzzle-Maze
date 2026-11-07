@@ -1,5 +1,6 @@
 extends Control
 signal cell_pressed(cell: int)
+const TILE_SIZE := 96.0
 var level: Dictionary = {}
 var state: Dictionary = {}
 var trail: Array = []
@@ -41,6 +42,9 @@ func set_blurred(value: bool) -> void:
 
 func show_board(data: Dictionary, current: Dictionary, history: Array, hint_cell: int) -> void:
 	level = data
+	cell_size = TILE_SIZE
+	custom_minimum_size = Vector2.ONE * (level.size * TILE_SIZE + 28)
+	board_rect = Rect2(Vector2(maxf(14, (size.x - level.size * TILE_SIZE) / 2), 14), Vector2.ONE * level.size * TILE_SIZE)
 	state = current
 	trail = history
 	hint = hint_cell
@@ -48,9 +52,8 @@ func show_board(data: Dictionary, current: Dictionary, history: Array, hint_cell
 
 func _draw() -> void:
 	if level.is_empty(): return
-	var side: float = minf(size.x, size.y) - 28
-	board_rect = Rect2((size - Vector2.ONE * side) / 2, Vector2.ONE * side)
-	cell_size = side / level.size
+	cell_size = TILE_SIZE
+	board_rect = Rect2(Vector2(maxf(14, (size.x - level.size * TILE_SIZE) / 2), 14), Vector2.ONE * level.size * TILE_SIZE)
 	var island := StyleBoxFlat.new()
 	island.bg_color = Color("#7daf4c")
 	island.border_color = Color("#d9c58e")
@@ -136,6 +139,10 @@ func _input(event: InputEvent) -> void:
 	if locked or not is_visible_in_tree() or level.is_empty() or get_tree().paused:
 		cancel_drag()
 		return
+	# A scrolled-off board must not consume clicks on other controls.
+	if event is InputEventMouseButton or event is InputEventScreenTouch:
+		if event.pressed and get_parent() is ScrollContainer and not get_parent().get_global_rect().has_point(event.position):
+			return
 	var transform := get_global_transform_with_canvas().affine_inverse()
 	if event is InputEventScreenTouch:
 		if event.pressed and active_touch == -1:

@@ -10,6 +10,8 @@ var history: Array = []
 var optimal := 0
 var saves: Dictionary = {"bests": {}, "muted": false}
 var board: Control
+var board_scroll: ScrollContainer
+var help_back: Button
 var size_select: OptionButton
 var setup_panel: PanelContainer
 var hard_toggle: Button
@@ -168,10 +170,14 @@ func _ready() -> void:
 	play_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	play_panel.add_theme_constant_override("separation", 10)
 	layout.add_child(play_panel)
+	board_scroll = ScrollContainer.new()
+	board_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	board_scroll.custom_minimum_size.y = 450
+	play_panel.add_child(board_scroll)
 	board = Board.new()
-	board.custom_minimum_size = Vector2(280, 450)
+	board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	board.cell_pressed.connect(step)
-	play_panel.add_child(board)
+	board_scroll.add_child(board)
 	var movement_title := label("MOVE MOCHA", 14)
 	movement_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	play_panel.add_child(movement_title)
@@ -232,7 +238,7 @@ func _ready() -> void:
 	objectives.add_child(label("YOUR CHECKLIST", 17))
 	checked_icon = _svg_icon('<rect x="2" y="2" width="20" height="20" rx="5" fill="#229c7a"/><path d="m6 12 4 4 8-9" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>')
 	unchecked_icon = _svg_icon('<rect x="2" y="2" width="20" height="20" rx="5" fill="#fff9e9" stroke="#8ca89c" stroke-width="2"/>')
-	for entry in [["bone", "Bone 1"], ["bone", "Bone 2"], ["bone", "Bone 3"], ["key", "Golden key"], ["dog_house", "Return home"]]:
+	for entry in [["bone", "0/3 bones collected"], ["key", "Key collected"], ["dog_house", "Return home"]]:
 		var row := PanelContainer.new()
 		row.add_theme_stylebox_override("panel", style("#f1e6cc", 12))
 		objectives.add_child(row)
@@ -290,9 +296,9 @@ func _ready() -> void:
 	help_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	help_box.add_theme_constant_override("separation", 22)
 	help_scroll.add_child(help_box)
-	var back := button("Back to game", _hide_help, true)
-	back.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	help_box.add_child(back)
+	help_back = icon_button("back", "Back to game", _hide_help)
+	help_back.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	help_box.add_child(help_back)
 	var help_title := label("How to play", 30)
 	help_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	help_box.add_child(help_title)
@@ -301,7 +307,7 @@ func _ready() -> void:
 	help_box.add_child(tutorial)
 	help_box.add_child(label("Help Mocha collect all three bones and one key, then return to the doghouse.", 22))
 	help_box.add_child(label("NORMAL MODE\nCollect the bones and key in any order, then go home.\n\nHARD MODE\nCollect all three bones first. The key stays in the garden until you have every bone. If you walk over it early, come back for it later.", 18))
-	help_box.add_child(label("Drag Mocha along open paths, tap an adjacent tile, or use the direction buttons. On a keyboard, use arrow keys or WASD. Hedges block movement.\n\nThe timer starts on your first move and pauses while this page is open. Restart resets the current garden; New puzzle generates another.", 16))
+	help_box.add_child(label("Drag Mocha along open paths, tap an adjacent tile, or use the direction buttons. On a keyboard, use arrow keys or WASD. Hedges block movement.\n\nThe timer starts when the garden is generated and pauses while this page is open. Restart resets the current garden; New puzzle generates another.", 16))
 	help_cover.hide()
 	scroll.show()
 	get_node("/root/GPX").pause_changed.connect(_paused)
@@ -341,10 +347,7 @@ func _resize() -> void:
 	layout.move_child(setup_panel, 1 if narrow else 0)
 	layout.move_child(play_panel, 0 if narrow else 1)
 	objectives_panel.custom_minimum_size.x = 0 if narrow else 230
-	# 125% of the prior grid target, capped to the available width on phones.
-	var old_target := clampf(minf(size.x - 60, size.y * 0.60) if narrow else minf(size.x - 540, size.y * 0.65), 260, 580)
-	var available := size.x - (40 if narrow else 520)
-	board.custom_minimum_size.y = minf(available, old_target * 1.25)
+	board_scroll.custom_minimum_size.y = clampf(size.y * 0.65, 280, 720)
 
 func generate() -> void:
 	var seed_value := str(Time.get_ticks_usec()) + "-" + str(randi())
@@ -377,8 +380,10 @@ func restart() -> void:
 	history.clear()
 	board.cancel_drag()
 	elapsed = 0.0
-	timer_running = false
+	timer_running = true
 	_update_timer()
+	board_scroll.scroll_horizontal = 0
+	board_scroll.scroll_vertical = 0
 	overlay.hide()
 	for control in direction_buttons: control.disabled = false
 	refresh()
@@ -432,12 +437,15 @@ func best_key() -> String:
 
 func refresh() -> void:
 	board.locked = get_tree().paused or overlay.visible or help_cover.visible
-	for i in 5:
-		var complete: bool = bool(state.mask & (1 << i)) if i < 3 else bool(state.key) if i == 3 else rules.won(level, state)
+	var bones := int(bool(state.mask & 1)) + int(bool(state.mask & 2)) + int(bool(state.mask & 4))
+	objective_labels[0].text = "%d/3 bones collected" % bones
+	for i in 3:
+		var complete: bool = bones == 3 if i == 0 else bool(state.key) if i == 1 else rules.won(level, state)
 		objective_checks[i].texture = checked_icon if complete else unchecked_icon
 		objective_rows[i].add_theme_stylebox_override("panel", style("#dcefdc" if complete else "#f1e6cc", 12))
-		objective_rows[i].tooltip_text = "Completed" if complete else "Still to collect" if i < 4 else "Collect the bones and key, then reach home"
+		objective_rows[i].tooltip_text = "Completed" if complete else "Still to collect" if i < 2 else "Collect the bones and key, then reach home"
 	board.show_board(level, state, history, -1)
+	_follow_dog.call_deferred()
 
 func _toggle_sound() -> void:
 	begin()
@@ -498,6 +506,7 @@ func icon_button(kind: String, description: String, action: Callable) -> Button:
 
 func _control_icon(kind: String) -> Texture2D:
 	var paths := {
+		"back": '<path d="M20 12H4m7-7-7 7 7 7" fill="none" stroke="#174f50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',
 		"pause": '<path d="M8 5v14M16 5v14" stroke="#174f50" stroke-width="4"/>',
 		"play": '<path d="m7 4 14 8-14 8z" fill="#174f50"/>',
 		"help": '<path d="M8 8a4 4 0 1 1 6 3.5c-2 1-2 2-2 3" fill="none" stroke="#174f50" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="19" r="1.4" fill="#174f50"/>',
@@ -506,3 +515,16 @@ func _control_icon(kind: String) -> Texture2D:
 		"muted": '<path d="M3 9h4l5-4v14l-5-4H3z" fill="#174f50"/><path d="m16 9 6 6m0-6-6 6" stroke="#174f50" stroke-width="2" stroke-linecap="round"/>'
 	}
 	return _svg_icon(paths[kind])
+
+func _follow_dog() -> void:
+	if level.is_empty(): return
+	var cell := Rect2(Vector2(state.pos % level.size, state.pos / level.size) * Board.TILE_SIZE + board.board_rect.position, Vector2.ONE * Board.TILE_SIZE)
+	var visible_size := board_scroll.size - Vector2(18, 18)
+	if cell.position.x < board_scroll.scroll_horizontal:
+		board_scroll.scroll_horizontal = int(cell.position.x)
+	elif cell.end.x > board_scroll.scroll_horizontal + visible_size.x:
+		board_scroll.scroll_horizontal = int(cell.end.x - visible_size.x)
+	if cell.position.y < board_scroll.scroll_vertical:
+		board_scroll.scroll_vertical = int(cell.position.y)
+	elif cell.end.y > board_scroll.scroll_vertical + visible_size.y:
+		board_scroll.scroll_vertical = int(cell.end.y - visible_size.y)

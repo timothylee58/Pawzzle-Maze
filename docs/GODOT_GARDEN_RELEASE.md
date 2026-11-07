@@ -147,3 +147,18 @@ The 390x844 browser iframe also renders the complete 1x10 tutorial correctly.
 
 Release build: 3LmjSHCv1KSkiFlfoUCH4kMb0im (12,880,572-byte ZIP).
 Web evidence: garden-compact-controls.jpg.
+
+## Fixed tiles, checklist and automatic timer
+
+- Checklist now has three sprite rows: X/3 bones collected, Key collected,
+  Return home. Bone count updates for each collected bone.
+- Every garden uses 96-unit tiles, with fixed sprite proportions. Smaller
+  gardens are centered; larger gardens scroll without shrinking sprites.
+  The view follows Mocha, and clipped areas do not intercept outside clicks.
+- The tutorial return control is a minimalist left-arrow icon.
+- Generation and restart immediately start the timer. Help/pause still freeze
+  it, and completion stops it. Instructions updated accordingly.
+- 2,245 integration checks pass, covering all grid sizes, touch input, checklist
+  masks, automatic timing, pause/resume, popup clicks and large-grid following.
+- The minimum-step solver and scoring behavior are unchanged. A proposal to
+  validate/expose the existing state-space BFS is pending user approval.
