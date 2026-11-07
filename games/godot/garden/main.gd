@@ -10,7 +10,9 @@ var history: Array = []
 var optimal := 0
 var saves: Dictionary = {"bests": {}, "muted": false}
 var board: Control
-var board_scroll: ScrollContainer
+var sidebar_scroll: ScrollContainer
+var sidebar: VBoxContainer
+var directions: GridContainer
 var help_back: Button
 var size_select: OptionButton
 var setup_panel: PanelContainer
@@ -110,13 +112,16 @@ func _ready() -> void:
 	scroll = ScrollContainer.new()
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	add_child(scroll)
 	var margin := MarginContainer.new()
 	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for edge in ["left", "right", "top", "bottom"]: margin.add_theme_constant_override("margin_" + edge, 20)
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for edge in ["left", "right", "top", "bottom"]: margin.add_theme_constant_override("margin_" + edge, 12)
 	scroll.add_child(margin)
 	var page := VBoxContainer.new()
-	page.add_theme_constant_override("separation", 18)
+	page.add_theme_constant_override("separation", 12)
+	page.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_child(page)
 	header = Control.new()
 	header.custom_minimum_size.y = 170
@@ -157,43 +162,42 @@ func _ready() -> void:
 	header.resized.connect(_layout_header)
 	header_right.resized.connect(_layout_header)
 	layout = BoxContainer.new()
-	layout.add_theme_constant_override("separation", 20)
+	layout.add_theme_constant_override("separation", 12)
+	layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	page.add_child(layout)
+	sidebar_scroll = ScrollContainer.new()
+	sidebar_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	layout.add_child(sidebar_scroll)
+	sidebar = VBoxContainer.new()
+	sidebar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sidebar.add_theme_constant_override("separation", 12)
+	sidebar_scroll.add_child(sidebar)
 	setup_panel = panel()
-	setup_panel.custom_minimum_size.x = 190
+	setup_panel.custom_minimum_size.x = 0
 	setup_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	layout.add_child(setup_panel)
+	sidebar.add_child(setup_panel)
 	var setup := VBoxContainer.new()
-	setup.add_theme_constant_override("separation", 14)
+	setup.add_theme_constant_override("separation", 8)
 	setup_panel.add_child(setup)
 	play_panel = VBoxContainer.new()
 	play_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	play_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	play_panel.add_theme_constant_override("separation", 10)
 	layout.add_child(play_panel)
-	board_scroll = ScrollContainer.new()
-	board_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	board_scroll.custom_minimum_size.y = 450
-	play_panel.add_child(board_scroll)
-	board = Board.new()
-	board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	board.cell_pressed.connect(step)
-	board_scroll.add_child(board)
-	var movement_title := label("MOVE MOCHA", 14)
-	movement_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	play_panel.add_child(movement_title)
 	var directions_center := CenterContainer.new()
 	play_panel.add_child(directions_center)
-	var directions := GridContainer.new()
-	directions.columns = 3
-	directions.add_theme_constant_override("h_separation", 8)
+	directions = GridContainer.new()
+	directions.columns = 4
+	directions.add_theme_constant_override("h_separation", 6)
 	directions.add_theme_constant_override("v_separation", 6)
 	directions_center.add_child(directions)
-	for entry in [["", Vector2i.ZERO], ["Up", Vector2i.UP], ["", Vector2i.ZERO], ["Left", Vector2i.LEFT], ["Down", Vector2i.DOWN], ["Right", Vector2i.RIGHT]]:
+	for entry in [["Up", Vector2i.UP], ["Left", Vector2i.LEFT], ["Down", Vector2i.DOWN], ["Right", Vector2i.RIGHT]]:
 		if entry[0] == "":
 			directions.add_child(Control.new())
 			continue
 		var direction: Vector2i = entry[1]
-		var control := button(entry[0], func(): move_direction(direction))
+		var control := button("", func(): move_direction(direction))
+		control.tooltip_text = entry[0]
 		control.name = "Move" + entry[0]
 		control.icon = _arrow_icon(direction)
 		control.expand_icon = true
@@ -204,20 +208,22 @@ func _ready() -> void:
 			compact.content_margin_left = 8
 			compact.content_margin_right = 8
 			control.add_theme_stylebox_override(appearance, compact)
-		control.custom_minimum_size = Vector2(82, 48)
+		control.custom_minimum_size = Vector2(44, 44)
 		control.focus_mode = Control.FOCUS_NONE
 		control.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
 		direction_buttons.append(control)
 		directions.add_child(control)
-	var movement_help := label("Drag Mocha along a path, tap an adjacent tile, or use the direction buttons.", 13)
-	movement_help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	play_panel.add_child(movement_help)
+	board = Board.new()
+	board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	board.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	board.cell_pressed.connect(step)
+	play_panel.add_child(board)
 	objectives_panel = panel()
-	objectives_panel.custom_minimum_size.x = 230
+	objectives_panel.custom_minimum_size.x = 0
 	objectives_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	layout.add_child(objectives_panel)
+	sidebar.add_child(objectives_panel)
 	var objectives := VBoxContainer.new()
-	objectives.add_theme_constant_override("separation", 18)
+	objectives.add_theme_constant_override("separation", 8)
 	objectives_panel.add_child(objectives)
 	setup.add_child(label("Garden size", 15))
 	size_select = OptionButton.new()
@@ -342,12 +348,9 @@ func _resize() -> void:
 	_layout_header()
 	for popup in [overlay, pause_cover]:
 		if popup != null: popup.get_meta("card").custom_minimum_size.x = minf(440, size.x - 40)
-	layout.vertical = narrow
-	setup_panel.custom_minimum_size.x = 0 if narrow else 190
-	layout.move_child(setup_panel, 1 if narrow else 0)
-	layout.move_child(play_panel, 0 if narrow else 1)
-	objectives_panel.custom_minimum_size.x = 0 if narrow else 230
-	board_scroll.custom_minimum_size.y = clampf(size.y * 0.65, 280, 720)
+	layout.vertical = false
+	sidebar_scroll.custom_minimum_size.x = 160 if size.x < 600 else 240
+	directions.columns = 2 if size.x < 600 else 4
 
 func generate() -> void:
 	var seed_value := str(Time.get_ticks_usec()) + "-" + str(randi())
@@ -382,8 +385,6 @@ func restart() -> void:
 	elapsed = 0.0
 	timer_running = true
 	_update_timer()
-	board_scroll.scroll_horizontal = 0
-	board_scroll.scroll_vertical = 0
 	overlay.hide()
 	for control in direction_buttons: control.disabled = false
 	refresh()
@@ -445,7 +446,6 @@ func refresh() -> void:
 		objective_rows[i].add_theme_stylebox_override("panel", style("#dcefdc" if complete else "#f1e6cc", 12))
 		objective_rows[i].tooltip_text = "Completed" if complete else "Still to collect" if i < 2 else "Collect the bones and key, then reach home"
 	board.show_board(level, state, history, -1)
-	_follow_dog.call_deferred()
 
 func _toggle_sound() -> void:
 	begin()
@@ -516,15 +516,3 @@ func _control_icon(kind: String) -> Texture2D:
 	}
 	return _svg_icon(paths[kind])
 
-func _follow_dog() -> void:
-	if level.is_empty(): return
-	var cell := Rect2(Vector2(state.pos % level.size, state.pos / level.size) * Board.TILE_SIZE + board.board_rect.position, Vector2.ONE * Board.TILE_SIZE)
-	var visible_size := board_scroll.size - Vector2(18, 18)
-	if cell.position.x < board_scroll.scroll_horizontal:
-		board_scroll.scroll_horizontal = int(cell.position.x)
-	elif cell.end.x > board_scroll.scroll_horizontal + visible_size.x:
-		board_scroll.scroll_horizontal = int(cell.end.x - visible_size.x)
-	if cell.position.y < board_scroll.scroll_vertical:
-		board_scroll.scroll_vertical = int(cell.position.y)
-	elif cell.end.y > board_scroll.scroll_vertical + visible_size.y:
-		board_scroll.scroll_vertical = int(cell.end.y - visible_size.y)

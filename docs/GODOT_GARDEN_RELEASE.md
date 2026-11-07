@@ -162,3 +162,15 @@ Web evidence: garden-compact-controls.jpg.
   masks, automatic timing, pause/resume, popup clicks and large-grid following.
 - The minimum-step solver and scoring behavior are unchanged. A proposal to
   validate/expose the existing state-space BFS is pending user approval.
+
+## Fit-screen layout revision
+
+- Moved the four direction buttons above the grid and removed the control tip.
+- Settings and the three-row checklist share a single left sidebar, which
+  scrolls independently on short screens.
+- Removed fixed tile sizes and board scrolling. The entire garden scales to
+  the largest square that fits right of the sidebar and under the title and
+  direction controls. Sprites scale with the cells.
+- 2,254 integration checks pass, including full-grid fit at 1280x900,
+  640x480, 390x844 and 320x640, all grid sizes, touch input and popup controls.
+- Godot MCP native run reports no errors. Minimum-step solver is unchanged.

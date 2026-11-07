@@ -112,7 +112,7 @@ func run() -> void:
 	for n in range(5, 15):
 		game.size_select.select(n - 5)
 		game.generate()
-		check(game.board.cell_size == 96 and game.board.custom_minimum_size == Vector2.ONE * (96 * n + 28), "fixed cell size %d" % n)
+		check(is_equal_approx(game.board.cell_size * n, game.board.board_rect.size.x) and game.board.board_rect.end.x <= game.board.size.x and game.board.board_rect.end.y <= game.board.size.y, "entire grid fits size %d" % n)
 		check(game.timer_running and game.elapsed == 0, "generation starts timer %d" % n)
 		var previous_seed: String = game.level.seed
 		game.generate()
@@ -169,10 +169,16 @@ func run() -> void:
 	await click_button(game.pause_button)
 	check(not paused and not game.board.blur_layer.visible and game.pause_button.tooltip_text == "Pause", "play icon resumes")
 
-	game._follow_dog()
-	game.state.pos = game.level.home
-	game._follow_dog()
-	check(game.board_scroll.scroll_horizontal > 0 and game.board_scroll.scroll_vertical > 0, "large grid follows dog")
+	check(game.objectives_panel.get_parent() == game.sidebar and game.setup_panel.get_parent() == game.sidebar, "settings and checklist share left sidebar")
+	check(game.directions.get_global_rect().end.y <= game.board.get_global_rect().position.y, "arrows above board")
+	for dimensions in [Vector2i(1280, 900), Vector2i(640, 480), Vector2i(390, 844), Vector2i(320, 640)]:
+		root.size = dimensions
+		await process_frame
+		await process_frame
+		await process_frame
+		var rect: Rect2 = game.board.get_global_rect()
+		check(rect.end.x <= game.size.x + 1 and rect.end.y <= game.size.y + 1, "board fits viewport %s" % dimensions)
+		check(game.board.board_rect.size.x > 0 and game.board.board_rect.end.x <= game.board.size.x + 1 and game.board.board_rect.end.y <= game.board.size.y + 1, "all cells visible %s" % dimensions)
 	game.saves = original
 	game._save()
 	game.queue_free()
