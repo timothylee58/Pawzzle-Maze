@@ -25,7 +25,7 @@ func neighbors(p: int, n: int) -> Array:
 	return result
 
 func generate(n: int, value: String) -> Dictionary:
-	assert(n in [5, 6, 8])
+	assert(n >= 5 and n <= 14)
 	rng_seed(value)
 	var edges: Array = []
 	for i in n * n: edges.append([])
@@ -94,8 +94,8 @@ func solve(level: Dictionary, start: Dictionary = {}) -> Array:
 	var nodes: Array = [{"state": start, "prev": -1}]
 	var seen: Dictionary = {state_key(start): true}
 	var at := 0
-	# At most 64 positions * 8 masks * 2 key states.
-	while at < nodes.size() and at < 1024:
+	# At most n*n positions * 8 masks * 2 key states.
+	while at < nodes.size() and at < int(level.size) * int(level.size) * 16:
 		var state: Dictionary = nodes[at].state
 		if won(level, state):
 			var route: Array = []

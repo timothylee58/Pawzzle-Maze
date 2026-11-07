@@ -6,10 +6,12 @@ The earlier princess-delivery campaign remains in its original scene.
 
 ## Gameplay
 
-Seeded 5x5, 6x6 and 8x8 mazes, three bones, a permanent golden key, and home.
-Arrow keys/WASD or adjacent-tile clicks move Mocha. Undo restores the full
-previous inventory and move count. Hints mark the attempt as assisted, excluding
-it from local bests. Restart resets the attempt; another adventure changes seed.
+Random 5x5 through 14x14 mazes, three bones, a permanent golden key, and home.
+Drag Mocha with touch or mouse along open paths; adjacent-tile taps, direction
+buttons and arrow keys/WASD also work. Hedges stop a drag without teleporting.
+Restart resets the current puzzle and timer; New puzzle creates a random one.
+The timer starts on the first valid move, pauses with help/platform pause, and
+stops on completion. The seed field, Undo and Hint controls have been removed.
 There is no server, login requirement, leaderboard, or automatically requested ad.
 
 ## Reproduce
@@ -51,6 +53,19 @@ Jam: Xsolla Game Jam (7 Nov), code `xsolla-game-jam-7-nov`.
 Engine: Godot; SDK integration enabled; desktop enabled, physical mobile pending.
 Icon and cover are rendered by the Godot marketing scene from repository art.
 Publication status is tracked in the final delivery; a draft alone is not approval.
+
+## Mobile controls and simplified UI revision
+
+- Top-right timer and How to play dialog; help scrolls within short screens.
+- Removed the above-board stats panel, seed field, Royal Errand copy and tagline.
+- Board target is 125% of its previous size, capped by available phone width;
+  board sprites scale with the cells. Garden sizes include every size 5-14.
+- 109 integration checks pass, including native touch press/drag/release, fast
+  multi-cell gestures, wall blocking, timer lifecycle and 80 solvable puzzles
+  spanning every size. The 18,100 original parity checks still pass.
+- Web export visually checked at desktop and in a 390x844 iframe; browser mouse
+  dragging, help, timer, and the 14x14 selector confirmed. Physical iOS/Android
+  and Safari remain untested. Headless teardown retains the known resource warning.
 
 The user-confirmed deadline is 8 November 2026 at 1 PM Malaysia time.
 Root-domain ads.txt verification remains separate from this game submission.
