@@ -84,7 +84,7 @@ function results() {
       'pawzzle-replay',
       JSON.stringify({ ...round.maze, optimal: round.optimal }),
     );
-    location.href = '/';
+    location.href = '/legacy.html';
   };
   $('result-scores').onclick = leaderboard;
   draw();
@@ -254,7 +254,7 @@ $('practice').onclick = async () => {
     await finish();
     if (round.status === 'active') return;
   }
-  location.href = '/';
+  location.href = '/legacy.html';
 };
 $('daily').onclick = () => {};
 $('start').onclick = async () => {

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pawzzle Maze</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header>
+      <a href="./" class="brand"
+        ><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+          <path
+            d="M3 25V3h22v22H11V11h7v7"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+          /></svg
+        >Pawzzle Maze</a
+      ><span>A little less is a little better.</span><button id="help">How to play</button>
+    </header>
+    <div class="layout">
+      <aside>
+        <nav aria-label="Game mode">
+          <button id="practice" class="selected">Practice <span>↗</span></button
+          ><button id="daily">Daily challenge <span>↗</span></button
+          ><button id="scores">Local leaderboard <span>↗</span></button>
+        </nav>
+        <div class="side-note">
+          <p>One destination.<br />More than one way.</p>
+          <small>Find the route with the fewest moves. Every step counts.</small>
+        </div>
+        <small class="local">Development build · v0.1<br />Scores stay on this device.</small>
+      </aside>
+      <main>
+        <div class="title-row">
+          <div>
+            <h1 id="title">Find your shortest way.</h1>
+            <p id="subtitle">A fresh maze. Sixty seconds. Room to improve.</p>
+          </div>
+          <label id="level-label"
+            >Difficulty<select id="level">
+              <option value="6">Introductory · 6 × 6</option>
+              <option value="9">Standard · 9 × 9</option>
+              <option value="12">Advanced · 12 × 12</option>
+            </select></label
+          >
+        </div>
+        <div class="play-layout">
+          <section class="game">
+            <div class="hud">
+              <div>
+                <span>Time left</span><strong id="time">60<span>s</span></strong>
+              </div>
+              <div><span>Current moves</span><strong id="moves">0</strong></div>
+              <div><span>Best moves</span><strong id="best">—</strong></div>
+              <div><span>Attempts</span><strong id="attempts">0</strong></div>
+            </div>
+            <div class="board-wrap">
+              <svg
+                id="board"
+                role="application"
+                aria-label="Maze. Use arrow keys to draw from start to goal."
+                tabindex="0"
+              ></svg>
+              <div id="curtain">
+                <div class="start-symbol">↘</div>
+                <h2>Take a moment.</h2>
+                <p>Draw from S to G.<br />Find the fewest moves in 60 seconds.</p>
+                <button id="start" class="primary">Start maze <span>→</span></button
+                ><small>The clock starts when the maze appears.</small>
+              </div>
+            </div>
+            <div class="board-footer">
+              <span>● S · Start</span><span>▣ G · Goal</span><span id="board-size">6 × 6 grid</span>
+            </div>
+            <div class="actions">
+              <button id="clear" disabled>Clear path</button
+              ><button id="finish" disabled>Finish round →</button>
+            </div>
+            <p id="feedback" role="status">Your best completed route is always kept.</p>
+          </section>
+          <section class="rail">
+            <div id="instructions">
+              <h2>Make every move count.</h2>
+              <ol>
+                <li>
+                  <b>Draw a route</b>
+                  <p>Press S and drag through open passages to G. Or use the arrow keys.</p>
+                </li>
+                <li>
+                  <b>Try a shorter way</b>
+                  <p>Reach the goal to submit. Backtrack to revise; your best route stays safe.</p>
+                </li>
+                <li>
+                  <b>Find your perfect</b>
+                  <p>Fewest moves wins. Time breaks ties. A perfect route ends the round.</p>
+                </li>
+              </ol>
+              <div class="tip">
+                Lift your finger anytime.<br />Continue from the path’s endpoint.
+              </div>
+            </div>
+            <div id="result" hidden></div>
+            <div id="leaderboard" hidden></div>
+          </section>
+        </div>
+        <footer>
+          <span>Fewer moves. Better routes.</span><span id="mode-note">Practice · Unranked</span>
+        </footer>
+      </main>
+    </div>
+    <dialog id="help-dialog">
+      <h2>How to play</h2>
+      <p>
+        Press the start cell S and draw to the goal G. Cross only open passages. Use arrow keys as
+        an alternative.
+      </p>
+      <p>
+        Drag backward to erase part of your path. Release and press the endpoint to resume. After
+        submitting, press any cell in your route to edit its prefix, or S to start over.
+      </p>
+      <p>
+        Every completed route counts as an attempt. Find a perfect route, finish after a submission,
+        or play until the 60-second deadline. Shorter routes always beat faster, longer routes.
+      </p>
+      <button id="close-help" class="primary">Got it</button>
+    </dialog>
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>

@@ -3,129 +3,97 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Pawzzle Maze</title>
-    <link rel="stylesheet" href="/src/style.css" />
+    <title>Pawzzle · The Princess’s Kingdom</title>
+    <link rel="stylesheet" href="/src/adventure.css" />
   </head>
   <body>
     <header>
-      <a href="./" class="brand"
-        ><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-          <path
-            d="M3 25V3h22v22H11V11h7v7"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="3"
-          /></svg
-        >Pawzzle Maze</a
-      ><span>A little less is a little better.</span><button id="help">How to play</button>
+      <a class="brand" href="/">Pawzzle<span>The Princess’s Kingdom</span></a
+      ><button id="help">How to play</button>
     </header>
-    <div class="layout">
-      <aside>
-        <nav aria-label="Game mode">
-          <button id="practice" class="selected">Practice <span>↗</span></button
-          ><button id="daily">Daily challenge <span>↗</span></button
-          ><button id="scores">Local leaderboard <span>↗</span></button>
-        </nav>
-        <div class="side-note">
-          <p>One destination.<br />More than one way.</p>
-          <small>Find the route with the fewest moves. Every step counts.</small>
+    <main>
+      <div class="heading">
+        <div>
+          <p class="eyebrow">A little adventure. A clever way home.</p>
+          <h1 id="title">The Royal Garden</h1>
         </div>
-        <small class="local">Development build · v0.1<br />Scores stay on this device.</small>
-      </aside>
-      <main>
-        <div class="title-row">
-          <div>
-            <h1 id="title">Find your shortest way.</h1>
-            <p id="subtitle">A fresh maze. Sixty seconds. Room to improve.</p>
+        <label>Chapter<select id="level" aria-label="Choose puzzle"></select></label>
+      </div>
+      <div class="play-layout">
+        <section class="game" aria-label="Route planner">
+          <div class="hud">
+            <div><span>Planned moves</span><strong id="moves">0</strong></div>
+            <div><span>Personal best</span><strong id="best">—</strong></div>
+            <div><span>Completed runs</span><strong id="attempts">0</strong></div>
           </div>
-          <label id="level-label"
-            >Difficulty<select id="level">
-              <option value="6">Introductory · 6 × 6</option>
-              <option value="9">Standard · 9 × 9</option>
-              <option value="12">Advanced · 12 × 12</option>
-            </select></label
-          >
-        </div>
-        <div class="play-layout">
-          <section class="game">
-            <div class="hud">
-              <div>
-                <span>Time left</span><strong id="time">60<span>s</span></strong>
-              </div>
-              <div><span>Current moves</span><strong id="moves">0</strong></div>
-              <div><span>Best moves</span><strong id="best">—</strong></div>
-              <div><span>Attempts</span><strong id="attempts">0</strong></div>
+          <div class="board-wrap">
+            <svg
+              id="board"
+              tabindex="0"
+              role="application"
+              aria-label="Route planner. Arrow keys move the preview dog. Backspace undoes a step. Enter runs a complete plan."
+              aria-describedby="instruction"
+            ></svg>
+            <div id="pause-cover" hidden>
+              <h2>Adventure paused</h2>
+              <p>Your route is right where you left it.</p>
+              <button id="resume">Resume</button>
             </div>
-            <div class="board-wrap">
-              <svg
-                id="board"
-                role="application"
-                aria-label="Maze. Use arrow keys to draw from start to goal."
-                tabindex="0"
-              ></svg>
-              <div id="curtain">
-                <div class="start-symbol">↘</div>
-                <h2>Take a moment.</h2>
-                <p>Draw from S to G.<br />Find the fewest moves in 60 seconds.</p>
-                <button id="start" class="primary">Start maze <span>→</span></button
-                ><small>The clock starts when the maze appears.</small>
-              </div>
-            </div>
-            <div class="board-footer">
-              <span>● S · Start</span><span>▣ G · Goal</span><span id="board-size">6 × 6 grid</span>
-            </div>
-            <div class="actions">
-              <button id="clear" disabled>Clear path</button
-              ><button id="finish" disabled>Finish round →</button>
-            </div>
-            <p id="feedback" role="status">Your best completed route is always kept.</p>
+          </div>
+          <div class="board-caption">
+            <span id="phase">Planning · ghost dog</span><span id="position"></span>
+          </div>
+          <div class="actions">
+            <button id="undo">Undo</button><button id="clear">Clear</button
+            ><button id="go" class="primary">Go →</button><button id="pause">Pause</button>
+          </div>
+          <p id="feedback" role="status" aria-live="polite"></p>
+          <div class="directions" aria-label="Movement controls">
+            <button data-direction="up" aria-label="Move up">↑</button
+            ><button data-direction="left" aria-label="Move left">←</button
+            ><button data-direction="down" aria-label="Move down">↓</button
+            ><button data-direction="right" aria-label="Move right">→</button>
+          </div>
+        </section>
+        <aside>
+          <div class="request">
+            <span class="eyebrow">Your royal assignment</span>
+            <h2 id="objective-title">A favor for Mocha</h2>
+            <p id="instruction"></p>
+            <ol id="objectives"></ol>
+            <blockquote id="mocha"></blockquote>
+          </div>
+          <section id="result" hidden aria-live="polite">
+            <h2 id="result-title"></h2>
+            <p id="result-detail"></p>
+            <button id="retry">Try a shorter route</button
+            ><button id="next" class="primary">Next adventure →</button>
           </section>
-          <section class="rail">
-            <div id="instructions">
-              <h2>Make every move count.</h2>
-              <ol>
-                <li>
-                  <b>Draw a route</b>
-                  <p>Press S and drag through open passages to G. Or use the arrow keys.</p>
-                </li>
-                <li>
-                  <b>Try a shorter way</b>
-                  <p>Reach the goal to submit. Backtrack to revise; your best route stays safe.</p>
-                </li>
-                <li>
-                  <b>Find your perfect</b>
-                  <p>Fewest moves wins. Time breaks ties. A perfect route ends the round.</p>
-                </li>
-              </ol>
-              <div class="tip">
-                Lift your finger anytime.<br />Continue from the path’s endpoint.
-              </div>
-            </div>
-            <div id="result" hidden></div>
-            <div id="leaderboard" hidden></div>
-          </section>
-        </div>
-        <footer>
-          <span>Fewer moves. Better routes.</span><span id="mode-note">Practice · Unranked</span>
-        </footer>
-      </main>
-    </div>
+          <p class="tip">
+            Draw from the ghost dog, tap a neighboring tile, or use the arrow keys. Revisit any
+            tile. Use Undo to erase.
+          </p>
+          <p id="storage" class="small">Untimed story · Saved on this device</p>
+        </aside>
+      </div>
+      <footer><span>V3 adventure demo</span><a href="/legacy.html">Original maze demo</a></footer>
+    </main>
     <dialog id="help-dialog">
-      <h2>How to play</h2>
+      <h2>Find your way home</h2>
       <p>
-        Press the start cell S and draw to the goal G. Cross only open passages. Use arrow keys as
-        an alternative.
+        Plan with arrow keys, the direction buttons, or drag from the ghost dog through open
+        passages. You can lift your finger and continue from the endpoint.
       </p>
       <p>
-        Drag backward to erase part of your path. Release and press the endpoint to resume. After
-        submitting, press any cell in your route to edit its prefix, or S to start over.
+        Collect the golden treat, then enter Mocha’s crown-marked tile to deliver it automatically.
+        Her gate opens for your next moves. Finish at the doghouse.
       </p>
       <p>
-        Every completed route counts as an attempt. Find a perfect route, finish after a submission,
-        or play until the 60-second deadline. Shorter routes always beat faster, longer routes.
+        Revisiting a tile adds a move. Undo removes the last step; Clear starts a fresh plan. Go
+        scores your route and brings the dog to life.
       </p>
-      <button id="close-help" class="primary">Got it</button>
+      <button id="close-help">Let’s play</button>
     </dialog>
-    <script type="module" src="/src/app.js"></script>
+    <script type="module" src="/src/adventure.js"></script>
   </body>
 </html>

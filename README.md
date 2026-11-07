@@ -4,13 +4,15 @@ Backend, frontend, and UI foundations for Pawzzle Maze, with a playable Three.js
 
 **Current team direction:** `DISCUSSION_SUMMARY.md` describes a dog adventure with treat collection, a guarding princess dog, and a win/retry loop. That brief was added while this scaffold was being built and is preserved unchanged.
 
-**Implemented demo:** the earlier shortest-route game from `GAME_DESIGN_DEVELOPMENT.md`, including generated practice and server-scored daily rounds. This legacy demo does not use the new V3 simulator or story interactions. The renderer, app structure, persistence, API, and shared-rule package are the foundation for that next gameplay pass; daily rankings are optional infrastructure, not a requirement of the newer brief.
+**Implemented demo:** the default browser entry is the V3 story adventure. Complete two short playable lessons, then explore The Royal Garden: draw or tap a route, Undo/Clear, press Go, watch treat pickup and delivery to Princess Mocha, and reach the doghouse. Results, tutorial unlocks and personal bests persist on this device. The original practice and daily demos remain at `/legacy.html` and `/daily.html`.
+
+The V3 browser uses the shared simulator locally and does not require the API. It includes keyboard and touch-friendly directional controls, reversible preview objectives, dog playback, automatic gate opening, pause/resume, background-tab pause, and reduced-motion playback. The Godot project remains a separate V1 demo.
 
 ## V3 backend behavior
 
 `GAME_DESIGN_DEVELOPMENT_V3.md` is the current consolidated target. The shared `@pawzzle/game-core/v3` package and `/api/v3/*` adapter now implement action-plan validation, golden-treat pickup/delivery to Mocha, permanent princess-gate approval, full-state optimal solving, campaign progress, and pausable local timed replay. The included Royal Garden level and two onboarding boards have verified optima. Shared simulation/campaign logic runs offline without the API.
 
-See [V3 behavior and API integration](docs/V3_BACKEND.md) for the comparison, schemas, events, endpoints, pause policy, and tests. The existing browser UI still uses the V1 demo; dog/Mocha presentation, Go/Undo wiring and GamePix lifecycle integration remain separate frontend work. V1 saves and scores are not migrated or mixed with V3.
+See [V3 behavior and API integration](docs/V3_BACKEND.md) for the comparison, schemas, events, endpoints, pause policy, and tests. The V3 browser now connects the Royal Garden controls, dog/Mocha presentation and playback. Timed-mode UI, lever tutorial content, audio and GamePix SDK integration remain future work. V1 saves and scores are not migrated or mixed with V3.
 
 ## Quick start
 
@@ -82,3 +84,7 @@ Practice local scores and daily server scores are deliberately separate. Godot i
 ## Visual direction
 
 Board-first neutral UI with a restrained green route. Three.js renders beveled walls, directional shadows and a raised route under an overhead orthographic camera. A semantic SVG provides the input layer and a flat fallback. Rendering stays separate from maze rules; all tied shortest routes are accepted.
+
+## Browser regression tests
+
+Run `npx playwright install chromium --only-shell` once, then `npm run test:browser`. Tests cover tutorial progression, revisits, delivery undo, playback pause, personal-best persistence, pointer routes and phone-width layout. Run `npm run check` for the API/shared rules and production build.
