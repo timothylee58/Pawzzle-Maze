@@ -1,0 +1,29 @@
+name: Validate Maze Lab
+on:
+  pull_request:
+    paths:
+      - 'web-prototype/**'
+      - '.github/workflows/prototype-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'web-prototype/**'
+      - '.github/workflows/prototype-check.yml'
+jobs:
+  prototype:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web-prototype
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web-prototype/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium --only-shell
+      - run: npm run test:browser
