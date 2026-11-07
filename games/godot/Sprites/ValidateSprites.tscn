@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b5j8dtq0khfiu"]
+
+[ext_resource type="Script" uid="uid://b1vs07mf2dl5d" path="res://Sprites/validate_sprites.gd" id="1_mwwnm"]
+
+[node name="ValidateSprites" type="Node" unique_id=2050823995]
+script = ExtResource("1_mwwnm")

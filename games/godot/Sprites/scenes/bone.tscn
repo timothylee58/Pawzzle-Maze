@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://lronm242q0xa"]
+
+[ext_resource type="Texture2D" uid="uid://v6uiea2xj7up" path="res://Sprites/atlas/bone.tres" id="1_iow70"]
+
+[node name="Bone" type="Node2D" unique_id=307921523]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1497156603]
+texture_filter = 2
+texture = ExtResource("1_iow70")

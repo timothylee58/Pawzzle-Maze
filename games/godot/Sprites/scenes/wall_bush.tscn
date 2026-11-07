@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://cedgk80x515uw"]
+
+[ext_resource type="Texture2D" uid="uid://cu1u0mk1k6mr7" path="res://Sprites/atlas/wall_bush.tres" id="1_tyhyx"]
+
+[node name="WallBush" type="Node2D" unique_id=1800917871]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1527154811]
+texture_filter = 2
+texture = ExtResource("1_tyhyx")

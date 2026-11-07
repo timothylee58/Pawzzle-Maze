@@ -1,0 +1,481 @@
+{
+	"atlas_size": [
+		1024,
+		768
+	],
+	"cell_size": 256,
+	"columns": 4,
+	"generator": "Godot Image API via Godlink MCP",
+	"godot_version": "4.7.2-stable (official)",
+	"sprites": [
+		{
+			"atlas_region": [
+				0,
+				0,
+				256,
+				256
+			],
+			"atlas_texture": "atlas/bone.tres",
+			"canvas_size": [
+				256,
+				256
+			],
+			"category": "collectible",
+			"content_rect": [
+				16,
+				16,
+				224,
+				224
+			],
+			"id": "bone",
+			"pivot": [
+				128,
+				128
+			],
+			"scene": "scenes/bone.tscn",
+			"source": "Assets/Bone.png",
+			"source_crop": [
+				0,
+				0,
+				280,
+				280
+			],
+			"source_sha256": "935663e21f3a904153bebafcfa2de707c451f5231d00baa8efb8888c3db24e95",
+			"source_size": [
+				280,
+				280
+			],
+			"texture": "textures/bone.png"
+		},
+		{
+			"atlas_region": [
+				256,
+				0,
+				256,
+				256
+			],
+			"atlas_texture": "atlas/dog_house.tres",
+			"canvas_size": [
+				256,
+				256
+			],
+			"category": "exit",
+			"content_rect": [
+				16,
+				16,
+				224,
+				224
+			],
+			"id": "dog_house",
+			"pivot": [
+				128,
+				128
+			],
+			"scene": "scenes/dog_house.tscn",
+			"source": "Assets/Dog House.png",
+			"source_crop": [
+				0,
+				0,
+				280,
+				280
+			],
+			"source_sha256": "2994ab83749254317b529002f1ff439969c3702406c020f92283352a16be6a6d",
+			"source_size": [
+				280,
+				280
+			],
+			"texture": "textures/dog_house.png"
+		},
+		{
+			"atlas_region": [
+				512,
+				0,
+				256,
+				256
+			],
+			"atlas_texture": "atlas/frisbee.tres",
+			"canvas_size": [
+				256,
+				256
+			],
+			"category": "collectible",
+			"content_rect": [
+				16,
+				16,
+				224,
+				224
+			],
+			"id": "frisbee",
+			"pivot": [
+				128,
+				128
+			],
+			"scene": "scenes/frisbee.tscn",
+			"source": "Assets/Frisbee.png",
+			"source_crop": [
+				0,
+				0,
+				280,
+				280
+			],
+			"source_sha256": "7f6cf0cd67cee3d75cf292958746d93f9cf1cee9e60befbb4bfc7fc6d64d2bf6",
+			"source_size": [
+				280,
+				280
+			],
+			"texture": "textures/frisbee.png"
+		},
+		{
+			"atlas_region": [
+				768,
+				0,
+				256,
+				256
+			],
+			"atlas_texture": "atlas/golden_treat.tres",
+			"canvas_size": [
+				256,
+				256
+			],
+			"category": "collectible",
+			"content_rect": [
+				18,
+				16,
+				220,
+				224
+			],
+			"id": "golden_treat",
+			"pivot": [
+				128,
+				128
+			],
+			"scene": "scenes/golden_treat.tscn",
+			"source": "Assets/Golden Treat.png",
+			"source_crop": [
+				6,
+				1,
+				274,
+				279
+			],
+			"source_sha256": "295188d6eb6275c31ad2f4a170b36c41ed6f3bd5ae0e86f0bfcbb72cdd1075fa",
+			"source_size": [
+				280,
+				280
+			],
+			"texture": "textures/golden_treat.png"
+		},
+		{
+			"atlas_region": [
+				0,
+				256,
+				256,
+				256
+			],
+			"atlas_texture": "atlas/key.tres",
+			"canvas_size": [
+				256,
+				256
+			],
+			"category": "collectible",
+			"content_rect": [
+				17,
+				16,
+				222,
+				224
+			],
+			"id": "key",
+			"pivot": [
+				128,
+				128
+			],
+			"scene": "scenes/key.tscn",
+			"source": "Assets/Key.png",
+			"source_crop": [
+				2,
+				0,
+				278,
+				280
+			],
+			"source_sha256": "55cccfa30d27d984389f280090a0d8f69e9b7dd082a500d8295c96c74720dfd7",
+			"source_size": [
+				280,
+				280
+			],
+			"texture": "textures/key.png"
+		},
+		{
+			"atlas_region": [
+				256,
+				256,
+				256,
+				256
+			],
+			"atlas_texture": "atlas/lever.tres",
+			"canvas_size": [
+				256,
+				256
+			],
+			"category": "interactable",
+			"content_rect": [
+				16,
+				16,
+				224,
+				224
+			],
+			"id": "lever",
+			"pivot": [
+				128,
+				128
+			],
+			"scene": "scenes/lever.tscn",
+			"source": "Assets/Lever.png",
+			"source_crop": [
+				0,
+				0,
+				280,
+				280
+			],
+			"source_sha256": "0abfe01a38143a087020bf17f66e91c1816cc7bb5661896b16b09d9dac27437f",
+			"source_size": [
+				280,
+				280
+			],
+			"texture": "textures/lever.png"
+		},
+		{
+			"atlas_region": [
+				512,
+				256,
+				256,
+				256
+			],
+			"atlas_texture": "atlas/portal_pair.tres",
+			"canvas_size": [
+				256,
+				256
+			],
+			"category": "portal",
+			"content_rect": [
+				17,
+				16,
+				222,
+				224
+			],
+			"id": "portal_pair",
+			"pivot": [
+				128,
+				128
+			],
+			"scene": "scenes/portal_pair.tscn",
+			"source": "Assets/Portal Pair.png",
+			"source_crop": [
+				2,
+				0,
+				278,
+				280
+			],
+			"source_sha256": "57b6c65c255639c1f7e7a64823f4e02d70a702c2abf2b1b2d7dee9f0d2a9e85f",
+			"source_size": [
+				280,
+				280
+			],
+			"texture": "textures/portal_pair.png"
+		},
+		{
+			"atlas_region": [
+				768,
+				256,
+				256,
+				256
+			],
+			"atlas_texture": "atlas/princess_mocha.tres",
+			"canvas_size": [
+				256,
+				256
+			],
+			"category": "character",
+			"content_rect": [
+				18,
+				16,
+				219,
+				224
+			],
+			"id": "princess_mocha",
+			"pivot": [
+				128,
+				128
+			],
+			"scene": "scenes/princess_mocha.tscn",
+			"source": "Assets/Princess Mocha.png",
+			"source_crop": [
+				27,
+				35,
+				205,
+				210
+			],
+			"source_sha256": "14462b8738611e9e3379434a4e9fa58aece372d02d5005812b03808ab14b85d9",
+			"source_size": [
+				256,
+				256
+			],
+			"texture": "textures/princess_mocha.png"
+		},
+		{
+			"atlas_region": [
+				0,
+				512,
+				256,
+				256
+			],
+			"atlas_texture": "atlas/royal_discovery.tres",
+			"canvas_size": [
+				256,
+				256
+			],
+			"category": "collectible",
+			"content_rect": [
+				16,
+				16,
+				224,
+				224
+			],
+			"id": "royal_discovery",
+			"pivot": [
+				128,
+				128
+			],
+			"scene": "scenes/royal_discovery.tscn",
+			"source": "Assets/Royal Discovery.png",
+			"source_crop": [
+				0,
+				0,
+				280,
+				280
+			],
+			"source_sha256": "23146c47fd745f856a112ca479d2c2608d6b209ec5e3a45078b92fdfbf5c298a",
+			"source_size": [
+				280,
+				280
+			],
+			"texture": "textures/royal_discovery.png"
+		},
+		{
+			"atlas_region": [
+				256,
+				512,
+				256,
+				256
+			],
+			"atlas_texture": "atlas/tennis_ball.tres",
+			"canvas_size": [
+				256,
+				256
+			],
+			"category": "collectible",
+			"content_rect": [
+				16,
+				16,
+				224,
+				224
+			],
+			"id": "tennis_ball",
+			"pivot": [
+				128,
+				128
+			],
+			"scene": "scenes/tennis_ball.tscn",
+			"source": "Assets/Tennis Ball.png",
+			"source_crop": [
+				0,
+				0,
+				280,
+				280
+			],
+			"source_sha256": "c1f10fa8de398b379c941d7cee54699000dc846babbb5abfbd3873f7917b33f4",
+			"source_size": [
+				280,
+				280
+			],
+			"texture": "textures/tennis_ball.png"
+		},
+		{
+			"atlas_region": [
+				512,
+				512,
+				256,
+				256
+			],
+			"atlas_texture": "atlas/wall_bush.tres",
+			"canvas_size": [
+				256,
+				256
+			],
+			"category": "obstacle",
+			"content_rect": [
+				16,
+				16,
+				224,
+				223
+			],
+			"id": "wall_bush",
+			"pivot": [
+				128,
+				128
+			],
+			"scene": "scenes/wall_bush.tscn",
+			"source": "Assets/Wall Bush.png",
+			"source_crop": [
+				42,
+				36,
+				171,
+				170
+			],
+			"source_sha256": "046865cb124791aec8fb1338208454f5ba816ea42d655b9366a772fb8bc20abc",
+			"source_size": [
+				256,
+				256
+			],
+			"texture": "textures/wall_bush.png"
+		},
+		{
+			"atlas_region": [
+				768,
+				512,
+				256,
+				256
+			],
+			"atlas_texture": "atlas/wall.tres",
+			"canvas_size": [
+				256,
+				256
+			],
+			"category": "obstacle",
+			"content_rect": [
+				22,
+				16,
+				212,
+				224
+			],
+			"id": "wall",
+			"pivot": [
+				128,
+				128
+			],
+			"scene": "scenes/wall.tscn",
+			"source": "Assets/Wall.png",
+			"source_crop": [
+				47,
+				40,
+				166,
+				175
+			],
+			"source_sha256": "a212c04c549a4667d99c456f2a9eb372bf75f1ec0e836e939c682b50d2b0bb62",
+			"source_size": [
+				256,
+				256
+			],
+			"texture": "textures/wall.png"
+		}
+	],
+	"version": 1
+}

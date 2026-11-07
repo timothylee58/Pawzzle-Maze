@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://csglcukoa3egq"]
+
+[ext_resource type="Texture2D" uid="uid://cwelpjq1e13kk" path="res://Sprites/atlas/frisbee.tres" id="1_q0mp7"]
+
+[node name="Frisbee" type="Node2D" unique_id=620307295]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1049862099]
+texture_filter = 2
+texture = ExtResource("1_q0mp7")

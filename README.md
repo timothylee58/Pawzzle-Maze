@@ -4,6 +4,8 @@
 
 A route-planning dog adventure built with Three.js, a shared deterministic game core, and an optional Fastify/SQLite API. A separate Godot project contains the earlier maze demo.
 
+**Godot GamePix export:** the timed Godot game now uses the sprite pack, includes the official GamePix plugin with SDK-v3 lifecycle/pause integration, and exports as a single-threaded browser build. See [setup and build instructions](games/godot/README.md), [verification evidence](docs/GAMEPIX_WEB_VERIFICATION.md), and the [packaged ZIP](releases/pawzzle-maze-gamepix.zip). This does not port the V3 campaign to Godot or add GamePix to the Three.js app.
+
 ## Recent update — V3 adventure
 
 [PR #3: Make the V3 Royal Garden adventure playable in the browser](https://github.com/timothylee58/Pawzzle-Maze/pull/3) was merged on November 7, 2026. It connects the [V3 backend and shared rules from PR #2](https://github.com/timothylee58/Pawzzle-Maze/pull/2) to the browser experience.
@@ -39,7 +41,7 @@ Open **http://127.0.0.1:5173**. The web dev server forwards `/api` to the API at
 - **V3 story (`/`):** the default adventure, with two lessons and Royal Garden. Runs locally without an API connection; progress is saved in browser storage.
 - **Legacy practice (`/legacy.html`):** generated mazes, local scores, adjustable difficulty, 60-second rounds, drawing and keyboard input.
 - **Legacy daily (`/daily.html`):** fixed daily layout issued only when the round starts, anonymous HTTP-only cookie identity, server receipt timing, canonical route validation, SQLite persistence, one round per identity/challenge, idempotent submissions, reload resume, end-of-round solution, and same-challenge leaderboard.
-- **Godot:** import `games/godot/project.godot` into Godot 4.5+ and run with F5. It has its own local generator and local scores, separate from browser daily play.
+- **Godot:** import `games/godot/project.godot` into Godot 4.7.2 and run with F5. It has its own local generator and local scores, separate from browser daily play. The GamePix Web preset and sprite integration are included.
 
 ### Browser-only development
 

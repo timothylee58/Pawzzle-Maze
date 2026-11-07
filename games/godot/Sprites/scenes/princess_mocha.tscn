@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://bq7mptjuukem2"]
+
+[ext_resource type="Texture2D" uid="uid://m8d5x524wvgt" path="res://Sprites/atlas/princess_mocha.tres" id="1_kj1y6"]
+
+[node name="PrincessMocha" type="Node2D" unique_id=532832961]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1895734072]
+texture_filter = 2
+texture = ExtResource("1_kj1y6")

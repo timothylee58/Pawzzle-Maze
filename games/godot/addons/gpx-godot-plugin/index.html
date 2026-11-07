@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Pawzzle Maze</title>
+<style>
+html,body {margin:0;width:100%;height:100%;overflow:hidden;background:#ecf0e6;touch-action:none;font-family:system-ui,sans-serif}
+#canvas {display:block;width:100%;height:100%;outline:none;touch-action:none}
+#loading {position:fixed;inset:0;display:grid;place-content:center;gap:18px;text-align:center;background:#edf1e5;color:#25382c;z-index:10}
+#loading[hidden] {display:none} h1 {margin:0} progress {width:min(75vw,320px);accent-color:#387c70}
+#status {max-width:80vw} #retry {padding:12px;border:0;border-radius:8px;background:#387c70;color:white}
+</style>
+$GODOT_HEAD_INCLUDE
+</head>
+<body>
+<canvas id="canvas" tabindex="0" aria-label="Pawzzle Maze game. Guide the dog to the house using arrow keys or dragging."></canvas>
+<div id="loading" role="status"><h1>Pawzzle Maze</h1><progress id="progress" max="100" value="0"></progress><div id="status">Preparing your garden maze…</div><button id="retry" hidden onclick="location.reload()">Try again</button></div>
+<script>window.GamePixConfig = {lifecycle: 'manual'};</script>
+<script src="https://integration.gamepix.com/sdk/v3/gamepix.sdk.js"></script>
+<script id="platform-bridge">
+(() => {
+  const sdk = window.GamePix;
+  let callback = null, sdkPaused = false, adPaused = false, adBusy = false;
+  let loadedPromise = null, started = false;
+  function syncPause() { if (callback) callback(Boolean(document.hidden || sdkPaused || adPaused)); }
+  if (sdk?.events?.on) {
+    sdk.events.on('pause', () => { sdkPaused = true; syncPause(); });
+    sdk.events.on('resume', () => { sdkPaused = false; syncPause(); });
+  }
+  document.addEventListener('visibilitychange', syncPause);
+  async function loaded() {
+    if (!loadedPromise) loadedPromise = Promise.resolve().then(() => sdk?.lifecycle?.loaded?.());
+    return loadedPromise;
+  }
+  async function requestAd(kind, done) {
+    if (adBusy) { done(false); return; }
+    adBusy = true; adPaused = true; syncPause();
+    let success = false;
+    try {
+      await loaded();
+      const method = sdk?.ads?.[kind];
+      if (method) success = (await method.call(sdk.ads))?.success === true;
+    } catch (error) { console.warn('GamePix ad unavailable', error); }
+    finally { adBusy = false; adPaused = false; syncPause(); done(success); }
+  }
+  window.PawzzlePlatform = {
+    registerPause(fn) { callback = fn; syncPause(); },
+    loading(value) { sdk?.lifecycle?.loading?.(Math.max(0, Math.min(100, Math.round(value)))); },
+    loaded,
+    gameStart() { if (started) return; started = true; loaded().then(() => sdk?.lifecycle?.gameStart?.()).catch(console.warn); },
+    lang() { return sdk?.lang?.() || 'en'; },
+    save(key,value) { try { localStorage.setItem(key,value); } catch (error) { console.warn('Save unavailable', error); } },
+    read(key) { try { return localStorage.getItem(key); } catch { return null; } },
+    updateScore(score) { sdk?.updateScore?.(score); },
+    updateLevel(level) { sdk?.updateLevel?.(level); },
+    happyMoment() { loaded().then(() => sdk?.happyMoment?.('round_complete')).catch(console.warn); },
+    interstitial(done) { requestAd('interstitial',done); },
+    reward(done) { requestAd('reward',done); }
+  };
+})();
+</script>
+<script src="$GODOT_URL"></script>
+<script>
+const engine = new Engine($GODOT_CONFIG);
+const progress = document.getElementById('progress');
+const status = document.getElementById('status');
+let greatestProgress = 0;
+function showError(error) {
+  console.error('Pawzzle Maze could not start:', error);
+  status.textContent = 'The game could not load. Check your connection and try again in a WebGL 2 browser.';
+  document.getElementById('retry').hidden = false;
+}
+PawzzlePlatform.loading(0);
+engine.startGame({onProgress(current,total) {
+  if (total > 0) {
+    greatestProgress = Math.max(greatestProgress, Math.floor(current / total * 95));
+    progress.value = greatestProgress;
+    PawzzlePlatform.loading(greatestProgress);
+  }
+}}).then(async () => {
+  progress.value = 100;
+  PawzzlePlatform.loading(100);
+  await PawzzlePlatform.loaded();
+  document.getElementById('loading').hidden = true;
+  document.getElementById('canvas').focus();
+}).catch(showError);
+</script>
+</body>
+</html>

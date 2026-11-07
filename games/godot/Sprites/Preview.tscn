@@ -1,0 +1,326 @@
+[gd_scene format=3 uid="uid://disxtn71vq333"]
+
+[ext_resource type="Texture2D" uid="uid://v6uiea2xj7up" path="res://Sprites/atlas/bone.tres" id="1_7rkxp"]
+[ext_resource type="Texture2D" uid="uid://bv7bvj74ugxqr" path="res://Sprites/atlas/dog_house.tres" id="2_x407k"]
+[ext_resource type="Texture2D" uid="uid://cwelpjq1e13kk" path="res://Sprites/atlas/frisbee.tres" id="3_e7n7l"]
+[ext_resource type="Texture2D" uid="uid://b2tcdjlw73j5f" path="res://Sprites/atlas/golden_treat.tres" id="4_pfhpf"]
+[ext_resource type="Texture2D" uid="uid://cfj6iyv5jgdeu" path="res://Sprites/atlas/key.tres" id="5_b43fx"]
+[ext_resource type="Texture2D" uid="uid://0kvrn280mgct" path="res://Sprites/atlas/lever.tres" id="6_wdgjo"]
+[ext_resource type="Texture2D" uid="uid://df5cpmmkkc6ts" path="res://Sprites/atlas/portal_pair.tres" id="7_fmc0y"]
+[ext_resource type="Texture2D" uid="uid://m8d5x524wvgt" path="res://Sprites/atlas/princess_mocha.tres" id="8_5fl6h"]
+[ext_resource type="Texture2D" uid="uid://gbrxp6ryexy7" path="res://Sprites/atlas/royal_discovery.tres" id="9_rrb4x"]
+[ext_resource type="Texture2D" uid="uid://deuc4gsb1oulm" path="res://Sprites/atlas/tennis_ball.tres" id="10_por7c"]
+[ext_resource type="Texture2D" uid="uid://cu1u0mk1k6mr7" path="res://Sprites/atlas/wall_bush.tres" id="11_2f12d"]
+[ext_resource type="Texture2D" uid="uid://sojiblxco4fc" path="res://Sprites/atlas/wall.tres" id="12_kuvok"]
+
+[node name="SpritePreview" type="Node2D" unique_id=1151218829]
+
+[node name="Background" type="ColorRect" parent="." unique_id=1254628780]
+offset_right = 1100.0
+offset_bottom = 840.0
+mouse_filter = 2
+color = Color(0.08627451, 0.13725491, 0.16078432, 1)
+
+[node name="Title" type="Label" parent="." unique_id=2146897614]
+offset_left = 32.0
+offset_top = 14.0
+offset_right = 1068.0
+offset_bottom = 50.0
+theme_override_font_sizes/font_size = 26
+text = "PAWZZLE MAZE  /  SPRITE LIBRARY"
+
+[node name="Subtitle" type="Label" parent="." unique_id=1287313872]
+offset_left = 32.0
+offset_top = 52.0
+offset_right = 1068.0
+offset_bottom = 78.0
+theme_override_colors/font_color = Color(0.72156864, 0.7882353, 0.78431374, 1)
+text = "12 source assets  •  256 × 256 RGBA  •  Godot Sprite2D + AtlasTexture"
+
+[node name="Card0" type="ColorRect" parent="." unique_id=1701555717]
+offset_left = 28.0
+offset_top = 92.0
+offset_right = 274.0
+offset_bottom = 316.0
+mouse_filter = 2
+color = Color(0.95686275, 0.93333334, 0.8901961, 1)
+
+[node name="Art0" type="Sprite2D" parent="." unique_id=2104269276]
+texture_filter = 2
+position = Vector2(151, 191)
+scale = Vector2(0.78, 0.78)
+texture = ExtResource("1_7rkxp")
+
+[node name="Name0" type="Label" parent="." unique_id=440332103]
+offset_left = 36.0
+offset_top = 286.0
+offset_right = 266.0
+offset_bottom = 312.0
+theme_override_colors/font_color = Color(0.14117648, 0.23137255, 0.22352941, 1)
+theme_override_font_sizes/font_size = 18
+text = "Bone"
+horizontal_alignment = 1
+
+[node name="Card1" type="ColorRect" parent="." unique_id=1533082551]
+offset_left = 294.0
+offset_top = 92.0
+offset_right = 540.0
+offset_bottom = 316.0
+mouse_filter = 2
+color = Color(0.8901961, 0.9137255, 0.8901961, 1)
+
+[node name="Art1" type="Sprite2D" parent="." unique_id=707774700]
+texture_filter = 2
+position = Vector2(417, 191)
+scale = Vector2(0.78, 0.78)
+texture = ExtResource("2_x407k")
+
+[node name="Name1" type="Label" parent="." unique_id=755711650]
+offset_left = 302.0
+offset_top = 286.0
+offset_right = 532.0
+offset_bottom = 312.0
+theme_override_colors/font_color = Color(0.14117648, 0.23137255, 0.22352941, 1)
+theme_override_font_sizes/font_size = 18
+text = "Dog House"
+horizontal_alignment = 1
+
+[node name="Card2" type="ColorRect" parent="." unique_id=971366870]
+offset_left = 560.0
+offset_top = 92.0
+offset_right = 806.0
+offset_bottom = 316.0
+mouse_filter = 2
+color = Color(0.95686275, 0.93333334, 0.8901961, 1)
+
+[node name="Art2" type="Sprite2D" parent="." unique_id=638673459]
+texture_filter = 2
+position = Vector2(683, 191)
+scale = Vector2(0.78, 0.78)
+texture = ExtResource("3_e7n7l")
+
+[node name="Name2" type="Label" parent="." unique_id=1010167586]
+offset_left = 568.0
+offset_top = 286.0
+offset_right = 798.0
+offset_bottom = 312.0
+theme_override_colors/font_color = Color(0.14117648, 0.23137255, 0.22352941, 1)
+theme_override_font_sizes/font_size = 18
+text = "Frisbee"
+horizontal_alignment = 1
+
+[node name="Card3" type="ColorRect" parent="." unique_id=440027421]
+offset_left = 826.0
+offset_top = 92.0
+offset_right = 1072.0
+offset_bottom = 316.0
+mouse_filter = 2
+color = Color(0.8901961, 0.9137255, 0.8901961, 1)
+
+[node name="Art3" type="Sprite2D" parent="." unique_id=346426836]
+texture_filter = 2
+position = Vector2(949, 191)
+scale = Vector2(0.78, 0.78)
+texture = ExtResource("4_pfhpf")
+
+[node name="Name3" type="Label" parent="." unique_id=297051974]
+offset_left = 834.0
+offset_top = 286.0
+offset_right = 1064.0
+offset_bottom = 312.0
+theme_override_colors/font_color = Color(0.14117648, 0.23137255, 0.22352941, 1)
+theme_override_font_sizes/font_size = 18
+text = "Golden Treat"
+horizontal_alignment = 1
+
+[node name="Card4" type="ColorRect" parent="." unique_id=1687240439]
+offset_left = 28.0
+offset_top = 332.0
+offset_right = 274.0
+offset_bottom = 556.0
+mouse_filter = 2
+color = Color(0.95686275, 0.93333334, 0.8901961, 1)
+
+[node name="Art4" type="Sprite2D" parent="." unique_id=262159248]
+texture_filter = 2
+position = Vector2(151, 431)
+scale = Vector2(0.78, 0.78)
+texture = ExtResource("5_b43fx")
+
+[node name="Name4" type="Label" parent="." unique_id=470956542]
+offset_left = 36.0
+offset_top = 526.0
+offset_right = 266.0
+offset_bottom = 552.0
+theme_override_colors/font_color = Color(0.14117648, 0.23137255, 0.22352941, 1)
+theme_override_font_sizes/font_size = 18
+text = "Key"
+horizontal_alignment = 1
+
+[node name="Card5" type="ColorRect" parent="." unique_id=796454420]
+offset_left = 294.0
+offset_top = 332.0
+offset_right = 540.0
+offset_bottom = 556.0
+mouse_filter = 2
+color = Color(0.8901961, 0.9137255, 0.8901961, 1)
+
+[node name="Art5" type="Sprite2D" parent="." unique_id=1283849248]
+texture_filter = 2
+position = Vector2(417, 431)
+scale = Vector2(0.78, 0.78)
+texture = ExtResource("6_wdgjo")
+
+[node name="Name5" type="Label" parent="." unique_id=578774312]
+offset_left = 302.0
+offset_top = 526.0
+offset_right = 532.0
+offset_bottom = 552.0
+theme_override_colors/font_color = Color(0.14117648, 0.23137255, 0.22352941, 1)
+theme_override_font_sizes/font_size = 18
+text = "Lever"
+horizontal_alignment = 1
+
+[node name="Card6" type="ColorRect" parent="." unique_id=1515837441]
+offset_left = 560.0
+offset_top = 332.0
+offset_right = 806.0
+offset_bottom = 556.0
+mouse_filter = 2
+color = Color(0.95686275, 0.93333334, 0.8901961, 1)
+
+[node name="Art6" type="Sprite2D" parent="." unique_id=1769140757]
+texture_filter = 2
+position = Vector2(683, 431)
+scale = Vector2(0.78, 0.78)
+texture = ExtResource("7_fmc0y")
+
+[node name="Name6" type="Label" parent="." unique_id=697906535]
+offset_left = 568.0
+offset_top = 526.0
+offset_right = 798.0
+offset_bottom = 552.0
+theme_override_colors/font_color = Color(0.14117648, 0.23137255, 0.22352941, 1)
+theme_override_font_sizes/font_size = 18
+text = "Portal Pair"
+horizontal_alignment = 1
+
+[node name="Card7" type="ColorRect" parent="." unique_id=1329561255]
+offset_left = 826.0
+offset_top = 332.0
+offset_right = 1072.0
+offset_bottom = 556.0
+mouse_filter = 2
+color = Color(0.8901961, 0.9137255, 0.8901961, 1)
+
+[node name="Art7" type="Sprite2D" parent="." unique_id=1386306750]
+texture_filter = 2
+position = Vector2(949, 431)
+scale = Vector2(0.78, 0.78)
+texture = ExtResource("8_5fl6h")
+
+[node name="Name7" type="Label" parent="." unique_id=2134845529]
+offset_left = 834.0
+offset_top = 526.0
+offset_right = 1064.0
+offset_bottom = 552.0
+theme_override_colors/font_color = Color(0.14117648, 0.23137255, 0.22352941, 1)
+theme_override_font_sizes/font_size = 18
+text = "Princess Mocha"
+horizontal_alignment = 1
+
+[node name="Card8" type="ColorRect" parent="." unique_id=2002274669]
+offset_left = 28.0
+offset_top = 572.0
+offset_right = 274.0
+offset_bottom = 796.0
+mouse_filter = 2
+color = Color(0.95686275, 0.93333334, 0.8901961, 1)
+
+[node name="Art8" type="Sprite2D" parent="." unique_id=2131173900]
+texture_filter = 2
+position = Vector2(151, 671)
+scale = Vector2(0.78, 0.78)
+texture = ExtResource("9_rrb4x")
+
+[node name="Name8" type="Label" parent="." unique_id=623241951]
+offset_left = 36.0
+offset_top = 766.0
+offset_right = 266.0
+offset_bottom = 792.0
+theme_override_colors/font_color = Color(0.14117648, 0.23137255, 0.22352941, 1)
+theme_override_font_sizes/font_size = 18
+text = "Royal Discovery"
+horizontal_alignment = 1
+
+[node name="Card9" type="ColorRect" parent="." unique_id=841326246]
+offset_left = 294.0
+offset_top = 572.0
+offset_right = 540.0
+offset_bottom = 796.0
+mouse_filter = 2
+color = Color(0.8901961, 0.9137255, 0.8901961, 1)
+
+[node name="Art9" type="Sprite2D" parent="." unique_id=429257997]
+texture_filter = 2
+position = Vector2(417, 671)
+scale = Vector2(0.78, 0.78)
+texture = ExtResource("10_por7c")
+
+[node name="Name9" type="Label" parent="." unique_id=2087841623]
+offset_left = 302.0
+offset_top = 766.0
+offset_right = 532.0
+offset_bottom = 792.0
+theme_override_colors/font_color = Color(0.14117648, 0.23137255, 0.22352941, 1)
+theme_override_font_sizes/font_size = 18
+text = "Tennis Ball"
+horizontal_alignment = 1
+
+[node name="Card10" type="ColorRect" parent="." unique_id=1164632297]
+offset_left = 560.0
+offset_top = 572.0
+offset_right = 806.0
+offset_bottom = 796.0
+mouse_filter = 2
+color = Color(0.95686275, 0.93333334, 0.8901961, 1)
+
+[node name="Art10" type="Sprite2D" parent="." unique_id=1022381994]
+texture_filter = 2
+position = Vector2(683, 671)
+scale = Vector2(0.78, 0.78)
+texture = ExtResource("11_2f12d")
+
+[node name="Name10" type="Label" parent="." unique_id=894717372]
+offset_left = 568.0
+offset_top = 766.0
+offset_right = 798.0
+offset_bottom = 792.0
+theme_override_colors/font_color = Color(0.14117648, 0.23137255, 0.22352941, 1)
+theme_override_font_sizes/font_size = 18
+text = "Wall Bush"
+horizontal_alignment = 1
+
+[node name="Card11" type="ColorRect" parent="." unique_id=1007016653]
+offset_left = 826.0
+offset_top = 572.0
+offset_right = 1072.0
+offset_bottom = 796.0
+mouse_filter = 2
+color = Color(0.8901961, 0.9137255, 0.8901961, 1)
+
+[node name="Art11" type="Sprite2D" parent="." unique_id=1292052718]
+texture_filter = 2
+position = Vector2(949, 671)
+scale = Vector2(0.78, 0.78)
+texture = ExtResource("12_kuvok")
+
+[node name="Name11" type="Label" parent="." unique_id=2098654625]
+offset_left = 834.0
+offset_top = 766.0
+offset_right = 1064.0
+offset_bottom = 792.0
+theme_override_colors/font_color = Color(0.14117648, 0.23137255, 0.22352941, 1)
+theme_override_font_sizes/font_size = 18
+text = "Wall"
+horizontal_alignment = 1

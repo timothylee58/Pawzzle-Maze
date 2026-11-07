@@ -1,5 +1,7 @@
 # GamePix Submission — Pawzzle Maze
 
+> **Godot export update (7 November 2026):** a tested timed-maze Web ZIP is now available at `releases/pawzzle-maze-gamepix.zip`, with sprite integration and the GamePix plugin. See [verification and limitations](docs/GAMEPIX_WEB_VERIFICATION.md). The V3 listing/checklist below remains a campaign target, not a description of this Godot build. No GamePix platform upload or approval has occurred.
+
 > Working submission notes for **Pawzzle Maze: The Princess's Kingdom**.
 > Source of truth: [GAME_DESIGN_DEVELOPMENT_V3.md](GAME_DESIGN_DEVELOPMENT_V3.md).
 > **Artwork is intentionally deferred.** Do not use placeholder photos or generated images as final art.

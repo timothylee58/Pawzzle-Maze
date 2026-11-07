@@ -27,6 +27,11 @@ var replay_button: Button
 var overlay: PanelContainer
 var show_optimal := false
 var saved := false
+var body: BoxContainer
+var aspect: AspectRatioContainer
+var trophy: TextureRect
+var pause_began := -1
+var platform_reported := false
 var ink := Color("25382c")
 var muted := Color("62705f")
 
@@ -56,6 +61,7 @@ func panel_style(color: Color, radius: int = 8) -> StyleBoxFlat:
 
 func _ready():
 	load_storage()
+	GPX.pause_changed.connect(_on_platform_pause)
 	var base_theme := Theme.new()
 	base_theme.default_font_size = 15
 	base_theme.set_stylebox("normal","Button",panel_style(Color("e4ebdf")))
@@ -67,64 +73,65 @@ func _ready():
 	base_theme.set_color("font_pressed_color","Button",ink)
 	base_theme.set_color("font_disabled_color","Button",Color("9aa593"))
 	theme = base_theme
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(scroll)
 	var margin := MarginContainer.new()
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	for side in ["left","right","top","bottom"]: margin.add_theme_constant_override("margin_"+side,24)
-	add_child(margin)
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for side in ["left","right","top","bottom"]: margin.add_theme_constant_override("margin_"+side,12)
+	scroll.add_child(margin)
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation",18)
+	root.add_theme_constant_override("separation",8)
 	margin.add_child(root)
 	var top := HBoxContainer.new()
 	root.add_child(top)
 	var brand := label("Pawzzle Maze",24)
 	brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(brand)
-	top.add_child(label("Godot edition · Local prototype",13,muted))
-	var nav := HBoxContainer.new()
+	var nav := HFlowContainer.new()
 	nav.add_theme_constant_override("separation",10)
 	root.add_child(nav)
 	nav.add_child(button("Practice",func(): change_mode("practice")))
 	nav.add_child(button("Daily challenge",func(): change_mode("daily")))
 	nav.add_child(button("Local leaderboard",show_scores))
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	nav.add_child(spacer)
 	difficulty = OptionButton.new()
 	difficulty.add_item("Introductory · 6 × 6",6)
 	difficulty.add_item("Standard · 9 × 9",9)
 	difficulty.add_item("Advanced · 12 × 12",12)
 	difficulty.item_selected.connect(func(_index): setup())
 	nav.add_child(difficulty)
-	title_label = label("Find your shortest way.",26)
+	title_label = label("Find your shortest way.",18)
 	root.add_child(title_label)
-	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation",28)
+	body = BoxContainer.new()
+	body.add_theme_constant_override("separation",14)
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(body)
 	var game := VBoxContainer.new()
 	game.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	game.add_theme_constant_override("separation",12)
+	game.add_theme_constant_override("separation",6)
 	body.add_child(game)
 	var hud := HBoxContainer.new()
-	hud.add_theme_constant_override("separation",28)
+	hud.add_theme_constant_override("separation",8)
 	game.add_child(hud)
 	var values: Array = []
-	for text in ["Time left","Current moves","Best moves","Attempts"]:
+	for text in ["Time","Moves","Best","Attempts"]:
 		var column := VBoxContainer.new()
 		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		hud.add_child(column)
 		column.add_child(label(text,12,muted))
-		var value := label("—",28)
+		var value := label("—",20)
 		values.append(value)
 		column.add_child(value)
 	time_label = values[0]
 	moves_label = values[1]
 	best_label = values[2]
 	attempts_label = values[3]
-	var aspect := AspectRatioContainer.new()
+	aspect = AspectRatioContainer.new()
 	aspect.ratio = 1.0
 	aspect.stretch_mode = AspectRatioContainer.STRETCH_FIT
-	aspect.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	aspect.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	aspect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	game.add_child(aspect)
 	board = Board.new()
@@ -144,18 +151,18 @@ func _ready():
 	var intro := VBoxContainer.new()
 	intro.add_theme_constant_override("separation",18)
 	center.add_child(intro)
-	var heading := label("Take a moment.",28)
+	var heading := label("Find the way home.",20)
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	intro.add_child(heading)
-	var description := label("Draw from S to G.\nFind the fewest moves in 60 seconds.",16,muted)
+	var description := label("Guide the dog to her house.\nFind the shortest route in 60 seconds.",13,muted)
 	description.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	intro.add_child(description)
-	start_button = button("Start maze →",start_round)
+	start_button = button("Start maze",start_round)
 	intro.add_child(start_button)
 	var hint := label("The clock starts when the maze appears.",12,muted)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	intro.add_child(hint)
-	var actions := HBoxContainer.new()
+	var actions := HFlowContainer.new()
 	actions.add_theme_constant_override("separation",12)
 	game.add_child(actions)
 	clear_button = button("Clear path",func():
@@ -164,7 +171,7 @@ func _ready():
 			submitted = false
 			refresh())
 	actions.add_child(clear_button)
-	finish_button = button("Finish round →",func():
+	finish_button = button("Finish round",func():
 		if active() and not round_model.best.is_empty(): finish_round())
 	actions.add_child(finish_button)
 	feedback = label("Your best completed route is always kept.",13,Color("31734b"))
@@ -172,12 +179,18 @@ func _ready():
 	feedback.custom_minimum_size.y = 42
 	game.add_child(feedback)
 	var rail := VBoxContainer.new()
-	rail.custom_minimum_size.x = 245
+	rail.custom_minimum_size.x = 190
 	rail.add_theme_constant_override("separation",14)
 	body.add_child(rail)
-	rail.add_child(label("Make every move count.",20))
-	var instructions := label("Draw a route\nPress S and drag to G.\nOr use the arrow keys.\n\nTry a shorter way\nBacktrack to revise your path.\nYour best route stays safe.\n\nFind your perfect\nFewest moves wins.\nTime breaks ties.",14,muted)
+	rail.add_child(label("Every move counts.",18))
+	var instructions := label("Start at the top-left dog.\nDrag to the house, or use\nthe arrow keys.\n\nBacktrack to revise.\nYour best route stays safe.\nFewest moves wins.",13,muted)
 	rail.add_child(instructions)
+	trophy = TextureRect.new()
+	trophy.texture = preload("res://Sprites/atlas/golden_treat.tres")
+	trophy.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	trophy.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	trophy.custom_minimum_size = Vector2(64,64)
+	rail.add_child(trophy)
 	result = label("",14,ink)
 	result.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rail.add_child(result)
@@ -191,10 +204,30 @@ func _ready():
 		mode = "practice"
 		setup(true))
 	rail.add_child(replay_button)
-	rail.add_child(button("New practice maze →",func(): change_mode("practice")))
+	rail.add_child(button("New practice maze",func(): change_mode("practice")))
 	mode_label = label("Practice · Unranked · Scores stay on this device",12,muted)
+	mode_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(mode_label)
+	get_viewport().size_changed.connect(_responsive_layout)
+	_responsive_layout()
 	setup()
+	GPX.game_loaded()
+
+func _responsive_layout():
+	var screen := get_viewport_rect().size
+	body.vertical = screen.x < 600
+	aspect.custom_minimum_size.y = maxf(240.0, minf(screen.y - 265.0, screen.x - (36.0 if body.vertical else 240.0)))
+
+func _on_platform_pause(paused: bool):
+	if paused:
+		pause_began = Time.get_ticks_msec()
+		board.dragging = false
+	elif pause_began >= 0:
+		if round_model != null and not round_model.finished:
+			var duration := Time.get_ticks_msec() - pause_began
+			round_model.started += duration
+			round_model.deadline += duration
+		pause_began = -1
 
 func setup(replay: bool = false):
 	round_model = null
@@ -202,6 +235,8 @@ func setup(replay: bool = false):
 	submitted = false
 	show_optimal = false
 	saved = false
+	platform_reported = false
+	trophy.hide()
 	board.dragging = false
 	daily_key = Time.get_date_string_from_system(true)
 	if not replay:
@@ -213,7 +248,7 @@ func setup(replay: bool = false):
 	board.layer.hide()
 	board.queue_redraw()
 	start_button.disabled = false
-	start_button.text = "Review daily result" if mode == "daily" and storage.daily.has(daily_key) else "Start maze →"
+	start_button.text = "Review daily result" if mode == "daily" and storage.daily.has(daily_key) else "Start maze"
 	clear_button.disabled = true
 	finish_button.disabled = true
 	difficulty.disabled = mode == "daily"
@@ -244,17 +279,19 @@ func start_round():
 	board.layer.show()
 	overlay.hide()
 	round_model = RoundModel.new(maze,Time.get_ticks_msec())
+	GPX.game_start()
 	route = [0]
 	if mode == "daily":
 		storage.daily[daily_key] = {"status":"active"}
 		persist()
 	clear_button.disabled = false
 	difficulty.disabled = true
-	feedback.text = "Draw from S to G. Arrow keys work too."
+	feedback.text = "Guide the dog to the house. Arrow keys work too."
 	board.grab_focus()
 	refresh()
 
 func active() -> bool:
+	if get_tree().paused: return false
 	if round_model == null or round_model.finished: return false
 	if Time.get_ticks_msec() >= round_model.deadline:
 		feedback.text = "Time’s up. Your best completed route is kept."
@@ -336,6 +373,10 @@ func finish_round():
 		saved = true
 		persist()
 	var best: Dictionary = round_model.best
+	trophy.visible = not best.is_empty()
+	if not best.is_empty() and not platform_reported:
+		platform_reported = true
+		GPX.happyMoment()
 	result.text = "No completed route\nOptimal: %s moves\nAttempts: %s" % [maze.optimal.size()-1,round_model.attempts] if best.is_empty() else "%s\n\nBest route: %s moves\nOptimal: %s moves\nExtra moves: +%s\nBest achieved: %.2f s\nAttempts: %s" % ["Perfectly done." if best.extra == 0 else "Room to improve.",best.moves,maze.optimal.size()-1,best.extra,best.elapsed/1000.0,round_model.attempts]
 	optimal_button.show()
 	replay_button.show()
@@ -369,11 +410,21 @@ func persist_best():
 
 func persist():
 	if "--test-mode" in OS.get_cmdline_user_args(): return
+	if OS.has_feature("web"):
+		GPX.setItem("pawzzle-maze-results-v1", JSON.stringify(storage))
+		return
 	var file := FileAccess.open("user://maze-results.json",FileAccess.WRITE)
 	if file: file.store_string(JSON.stringify(storage))
 
 func load_storage():
 	if "--test-mode" in OS.get_cmdline_user_args(): return
+	if OS.has_feature("web"):
+		var value = GPX.getItem("pawzzle-maze-results-v1")
+		if value != null:
+			var parsed = JSON.parse_string(str(value))
+			if parsed is Dictionary and parsed.get("scores") is Array and parsed.get("daily") is Dictionary:
+				storage = parsed
+		return
 	if FileAccess.file_exists("user://maze-results.json"):
 		var parsed = JSON.parse_string(FileAccess.get_file_as_string("user://maze-results.json"))
 		if parsed is Dictionary and parsed.has("scores") and parsed.has("daily"): storage = parsed

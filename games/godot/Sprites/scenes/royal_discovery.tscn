@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://b7d58t045abxo"]
+
+[ext_resource type="Texture2D" uid="uid://gbrxp6ryexy7" path="res://Sprites/atlas/royal_discovery.tres" id="1_k0pce"]
+
+[node name="RoyalDiscovery" type="Node2D" unique_id=497784995]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=474119033]
+texture_filter = 2
+texture = ExtResource("1_k0pce")

@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://rncoa5fnhl7r"]
+
+[ext_resource type="Texture2D" uid="uid://0kvrn280mgct" path="res://Sprites/atlas/lever.tres" id="1_veext"]
+
+[node name="Lever" type="Node2D" unique_id=1692419496]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=874221639]
+texture_filter = 2
+texture = ExtResource("1_veext")
