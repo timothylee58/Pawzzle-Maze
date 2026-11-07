@@ -4,7 +4,13 @@ Backend, frontend, and UI foundations for Pawzzle Maze, with a playable Three.js
 
 **Current team direction:** `DISCUSSION_SUMMARY.md` describes a dog adventure with treat collection, a guarding princess dog, and a win/retry loop. That brief was added while this scaffold was being built and is preserved unchanged.
 
-**Implemented demo:** the earlier shortest-route game from `GAME_DESIGN_DEVELOPMENT.md`, including generated practice and server-scored daily rounds. Dog movement, treats, guard interactions, and the optional lever are not implemented yet. The renderer, app structure, persistence, API, and shared-rule package are the foundation for that next gameplay pass; daily rankings are optional infrastructure, not a requirement of the newer brief.
+**Implemented demo:** the earlier shortest-route game from `GAME_DESIGN_DEVELOPMENT.md`, including generated practice and server-scored daily rounds. This legacy demo does not use the new V3 simulator or story interactions. The renderer, app structure, persistence, API, and shared-rule package are the foundation for that next gameplay pass; daily rankings are optional infrastructure, not a requirement of the newer brief.
+
+## V3 backend behavior
+
+`GAME_DESIGN_DEVELOPMENT_V3.md` is the current consolidated target. The shared `@pawzzle/game-core/v3` package and `/api/v3/*` adapter now implement action-plan validation, golden-treat pickup/delivery to Mocha, permanent princess-gate approval, full-state optimal solving, campaign progress, and pausable local timed replay. The included Royal Garden level and two onboarding boards have verified optima. Shared simulation/campaign logic runs offline without the API.
+
+See [V3 behavior and API integration](docs/V3_BACKEND.md) for the comparison, schemas, events, endpoints, pause policy, and tests. The existing browser UI still uses the V1 demo; dog/Mocha presentation, Go/Undo wiring and GamePix lifecycle integration remain separate frontend work. V1 saves and scores are not migrated or mixed with V3.
 
 ## Quick start
 

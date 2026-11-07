@@ -1,3 +1,5 @@
+import { registerV3 } from './v3/routes.js';
+import { RuleError } from '@pawzzle/game-core/v3';
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import staticFiles from '@fastify/static';
@@ -14,13 +16,19 @@ export async function buildApp({
 } = {}) {
   const app = Fastify({
     logger,
-    bodyLimit: 16384,
+    bodyLimit: 262144,
     ajv: { customOptions: { removeAdditional: false, coerceTypes: false } },
   });
   const db = openStore(database),
     service = createService(db, clock);
   app.addHook('onClose', () => db.close());
   await app.register(cookie);
+  app.decorateRequest('receivedAt', 0);
+  // Timestamp only after the complete request body has arrived and passed schema validation.
+  app.addHook('preHandler', (request, reply, done) => {
+    request.receivedAt = clock();
+    done();
+  });
   app.addHook('onRequest', async (request) => {
     if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method) && request.headers.origin) {
       const sameOrigin = `${request.protocol}://${request.headers.host}`;
@@ -29,9 +37,31 @@ export async function buildApp({
     }
   });
   app.setErrorHandler((error, request, reply) => {
-    const status = error.status ?? error.statusCode ?? 500;
+    const ruleStatus =
+      error instanceof RuleError
+        ? error.code === 'LEVEL_NOT_FOUND'
+          ? 404
+          : ['LEVEL_LOCKED', 'TUTORIAL_REQUIRED'].includes(error.code)
+            ? 403
+            : [
+                  'VERSION_MISMATCH',
+                  'IDEMPOTENCY_CONFLICT',
+                  'RUN_NOT_ACTIVE',
+                  'NO_COMPLETED_PLAN',
+                  'ASSISTANCE_REQUIRED',
+                  'TIMED_UNAVAILABLE',
+                ].includes(error.code)
+              ? 409
+              : 422
+        : null;
+    const status = ruleStatus ?? error.status ?? error.statusCode ?? 500;
     if (status >= 500) request.log.error(error);
-    reply.code(status).send({ error: status >= 500 ? 'Unexpected server error.' : error.message });
+    reply
+      .code(status)
+      .send({
+        error: status >= 500 ? 'Unexpected server error.' : error.message,
+        ...(error instanceof RuleError ? { code: error.code, actionIndex: error.actionIndex } : {}),
+      });
   });
   const player = (request) => service.player(request.cookies.pawzzle_session);
   app.get('/api/health', () => ({ ok: true, service: 'pawzzle-maze-api' }));
@@ -90,6 +120,7 @@ export async function buildApp({
       entries: service.leaderboard(request.query.challengeId),
     }),
   );
+  registerV3(app, { db, player, clock });
   const webRoot = fileURLToPath(new URL('../../web/dist/', import.meta.url));
   if (existsSync(webRoot)) await app.register(staticFiles, { root: webRoot });
   return app;
