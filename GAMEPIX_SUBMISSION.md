@@ -1,6 +1,6 @@
 # GamePix Submission — Pawzzle Maze
 
-> **Godot export update (7 November 2026):** a tested timed-maze Web ZIP is now available at `releases/pawzzle-maze-gamepix.zip`, with sprite integration and the GamePix plugin. See [verification and limitations](docs/GAMEPIX_WEB_VERIFICATION.md). The V3 listing/checklist below remains a campaign target, not a description of this Godot build. No GamePix platform upload or approval has occurred.
+> **Godot V3 export update (7 November 2026):** the sprite-based opening campaign is now packaged at `releases/pawzzle-maze-gamepix.zip`, with GamePix lifecycle integration. See [verification and limitations](docs/GAMEPIX_WEB_VERIFICATION.md). The listing below now matches the three-level campaign. No GamePix platform upload or approval has occurred.
 
 > Working submission notes for **Pawzzle Maze: The Princess's Kingdom**.
 > Source of truth: [GAME_DESIGN_DEVELOPMENT_V3.md](GAME_DESIGN_DEVELOPMENT_V3.md).
@@ -41,7 +41,7 @@
 | Tags | 1–5 | Five proposed; confirm platform's actual choices |
 | Icon | PNG/JPG; square, at least 256 × 256 px; max 1 MB | **Not created — visual work deferred** |
 | Cover | PNG/JPG; 16:10, at least 1360 × 850 px; max 1.5 MB | **Not created — visual work deferred** |
-| Game build | ZIP, max 2 GB, with `index.html` at ZIP root | **Not prepared/verified** |
+| Game build | ZIP, max 2 GB, with `index.html` at ZIP root | Godot V3 ZIP prepared and locally tested; see releases/pawzzle-maze-gamepix.zip |
 | Build processed | Must finish GamePix processing | **Not uploaded** |
 | Icon/cover processed | Must finish processing | **Not uploaded** |
 | Device switch | Desktop and/or mobile enabled | **Not configured** |
@@ -51,17 +51,17 @@
 
 ## Required build work before upload
 
-The existing README describes a playable **earlier shortest-route prototype**, not the V3 princess delivery game. Do not submit it as though it implements V3.
+The Godot GamePix build now implements the V3 opening campaign: two playable lessons and Royal Garden. See docs/GAMEPIX_WEB_VERIFICATION.md for local evidence; hosted GamePix processing remains pending.
 
-- [ ] Implement V3 plan → preview → Go workflow with a visible controllable dog character on execution.
-- [ ] Add one golden treat with automatic pickup and Princess Mocha's marked interaction tile.
-- [ ] Delivering the treat opens her linked passage; entering without it shows clear feedback.
-- [ ] End at doghouse only after objectives are complete; show results and replay.
-- [ ] Confirm Undo/Clear restore preview and objective state correctly; count actual moves, including planned backtracking.
-- [ ] Keep first release self-contained: no local Node API, SQLite or backend dependency inside the static ZIP.
-- [ ] Add GamePix SDK lifecycle handling: loading/ready/start, pause/resume, audio and visibility/focus behavior.
+- [x] Implement V3 plan → preview → Go workflow with a visible controllable dog character on execution.
+- [x] Add one golden treat with automatic pickup and Princess Mocha's marked interaction tile.
+- [x] Delivering the treat opens her linked passage; entering without it shows clear feedback.
+- [x] End at doghouse only after objectives are complete; show results and replay.
+- [x] Confirm Undo/Clear restore preview and objective state correctly; count actual moves, including planned backtracking.
+- [x] Keep first release self-contained: no local Node API, SQLite or backend dependency inside the static ZIP.
+- [x] Add GamePix SDK lifecycle handling: loading/ready/start, pause/resume, audio and visibility/focus behavior.
 - [ ] Test at 640 × 480, keyboard, mouse, and physical touch if mobile is enabled.
-- [ ] Use relative asset paths and verify that `index.html` is at the top level of the ZIP.
+- [x] Use relative asset paths and verify that `index.html` is at the top level of the ZIP.
 - [ ] Run the packaged game in a browser and make an early GamePix test upload.
 - [ ] Design final icon and cover later, then upload and verify processing before submission.
 
@@ -74,6 +74,6 @@ The existing README describes a playable **earlier shortest-route prototype**, n
 
 ## Status
 
-This file is **submission preparation**, not proof of GamePix acceptance. No artwork or final build accompanies this document. The team must confirm that the published game matches the listing before submitting.
+This file is **submission preparation**, not proof of GamePix acceptance. A sprite-based Godot campaign ZIP is available in releases/. Final listing artwork and GamePix-hosted acceptance remain pending. The team must confirm that the published game matches the listing before submitting.
 
 Sources: [V3 game design](GAME_DESIGN_DEVELOPMENT_V3.md), [GamePix JavaScript SDK](https://partners.gamepix.com/sdk/doc/javascript), [GamePix submission guidelines](https://partners.gamepix.com/guidelines/submission), and supplied jam checklist.

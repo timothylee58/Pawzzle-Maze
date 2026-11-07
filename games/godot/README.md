@@ -1,49 +1,33 @@
-# Pawzzle Maze — Godot / GamePix edition
+# Pawzzle Maze — Godot V3 / GamePix edition
 
-This Godot 4.7.2 project preserves the timed shortest-route game and now uses the generated 2D sprite atlas. It is separate from the repository's V3 browser adventure: princess delivery, gates, Go/playback and campaign onboarding are not ported to Godot by this change.
+The default Godot 4.7.2 project ports the current V3 opening campaign: **First steps home**, **A royal request**, and **The Royal Garden**. It uses the supplied sprite atlas for the player, crowned Princess Mocha, golden treat, doghouse, and hedge walls.
 
 ## Play
 
-Import `project.godot` and press F5. Start a round, then drag from the dog at the top left to the house at the bottom right, or use the arrow keys. Backtrack to revise. A perfect route ends the round; otherwise keep improving it within 60 seconds. Results offer the optimal route and practice replay.
+Import `project.godot` and press F5. Plan with arrow keys, direction buttons, adjacent tile taps, or dragging. Revisits append moves. Undo and Clear reconstruct inventory and gate state from the plan. Collect the treat, enter Mocha's crown tile to deliver it, and reach home. **Go** plays and scores a completed plan. Complete each lesson to unlock the next adventure. Results show moves, the proven optimum, extra moves, and your best. Clear starts a fresh attempt; use the level selector to revisit lessons.
 
-The board renders the supplied dog, doghouse, bush and wall artwork. Completed rounds show the golden-treat trophy. The remaining sprites are available for future mechanics. The full root `Sprites/` pack is copied under this project as `res://Sprites/`.
+Campaign play is untimed, as in the V3 browser UI. Pause/Resume and reduced-motion playback are available. SDK and visibility pauses block input and playback, mute audio, and preserve overlapping pause reasons. The player has a blue position ring and warm tint; Mocha has a crown. Small screens scroll vertically to controls and results.
 
-The interface adapts to landscape and portrait widths. On small screens, scroll vertically to secondary instructions and result controls. Keyboard and pointer dragging have been tested in the exported browser build; physical mobile-device testing remains pending.
+## Rules and saves
 
-## GamePix integration
+`packages/game-core/v3/levels.js` remains the level source of truth. Run `node tools/sync-godot-campaign.mjs` from the repository root after changing levels. It generates `campaign_levels.gd` and exhaustive reference transitions. The build refuses stale generated data.
 
-The official GamePix Godot plugin 1.2r is enabled. Its bridge and HTML shell have documented SDK-v3 adaptations in [PAWZZLE_CHANGES.md](addons/gpx-godot-plugin/PAWZZLE_CHANGES.md). Loading, readiness, first gameplay start, round-complete moments, visibility/SDK pause, audio mute restoration, and browser localStorage are connected.
+`campaign_rules.gd` implements the opening chapter's movement, discoveries, carried inventory, delivery, gates, completion, and tutorial requirements. Its independent full-state BFS verifies optimal move counts (4, 6, 10). All 352 reachable directional transitions are checked against JavaScript, including blocked moves and exact event/state results. Future keys, levers, ordered collectibles, and portals are rejected explicitly until ported; no such mechanics occur in this chapter. Timed replay, ranked/API modes, extra chapters, and new audio are outside this campaign port. Legacy V1 rule helpers/tests remain for regression coverage.
 
-Pauses stop input and preserve the remaining wall-clock round time. Clicking outside the iframe does not itself pause; hiding the page does. Ad APIs handle unavailable/rejected requests without granting rewards. This game does not automatically request ads or introduce rewarded features.
+Web progress uses GamePix localStorage key `pawzzle:godot-campaign:rules-3.0`; native progress uses `user://campaign-v3.json`. Records include level version, best plan, and attempts. Saved plans are resimulated before accepting unlocks. Progress is local to this edition, separate from V1 and Three.js saves. `--test-mode` skips storage. Storage failures leave the current visit playable.
 
-Desktop saves use `user://maze-results.json`; web saves use the known localStorage key `pawzzle-maze-results-v1`, allowing GamePix synchronization. `--test-mode` skips player storage. Scores remain local/unverified, and the Godot generator differs from the V3 web game's generator.
+## GamePix export
 
-## Export
+The official GamePix Godot plugin 1.2r remains enabled with documented SDK-v3 adaptations in [PAWZZLE_CHANGES.md](addons/gpx-godot-plugin/PAWZZLE_CHANGES.md). Loading/readiness, first Go, completed-playback happy moments, pause/audio, and browser storage are connected. No ads are requested automatically; SDK ad failure/reward handling has mock coverage.
 
-Install Godot 4.7.2's matching export templates. Select the **GamePix** Web preset and export to `index.html`, or run from the repository root:
+Install Godot 4.7.2 and matching export templates, then run from the repository root:
 
 ```powershell
-./tools/build-gamepix.ps1 -GodotExecutable 'C:/path/to/Godot_console.exe'
-```
-
-The script imports the project, exports the single-threaded Compatibility/WebGL 2 build, and creates `dist/pawzzle-maze-gamepix.zip` with `index.html` at the archive root. No cross-origin isolation headers, backend server or MCP plugin are needed. The GamePix SDK is the only remote script. A tested packaged snapshot is checked in under `releases/`.
-
-```sh
+./tools/test-godot-campaign.ps1 -GodotExecutable 'C:/path/to/Godot_console.exe'
+./tools/build-gamepix.ps1 -GodotExecutable 'C:/path/to/Godot_console.exe' -PackagePath releases/pawzzle-maze-gamepix.zip
 node tools/serve-gamepix.mjs
 ```
 
-Open `http://127.0.0.1:8067/` or `/iframe-test?width=640&height=480`. The HTTP server is local test tooling, not part of the exported game.
+Open `http://127.0.0.1:8067/`, or `/iframe-test?width=640&height=480`. The ZIP contains `index.html` at root, with relative assets and a single-threaded Compatibility/WebGL 2 build. It needs no backend, cross-origin isolation headers, or MCP plugin. GamePix's SDK is the sole remote script.
 
-## Tests
-
-Run from the repository root:
-
-```sh
-node --test tests/gamepix-platform.test.mjs
-godot --headless --path games/godot --script tests.gd
-godot --headless --path games/godot --script integration_test.gd -- --test-mode
-```
-
-The rules suite covers 8,438 assertions. Integration checks cover a complete round, results, input lockout, overlapping pause reasons, clock compensation and audio restoration. SDK bridge tests use mocks; actual GamePix-hosted ad delivery and platform acceptance require a GamePix test upload.
-
-See [verification report](../../docs/GAMEPIX_WEB_VERIFICATION.md) for browser evidence and remaining platform checks.
+The test script runs generated-data checks, JavaScript V3/SDK bridge tests, Godot rules parity, and campaign integration. See [verification evidence](../../docs/GAMEPIX_WEB_VERIFICATION.md) for browser results and remaining hosted-platform checks.

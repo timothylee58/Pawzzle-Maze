@@ -12,6 +12,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: node tools/sync-godot-campaign.mjs --check
+      - run: node --test tests/gamepix-platform.test.mjs
       - run: npm run check
       - run: npx playwright install --with-deps chromium --only-shell
       - run: npm run test:browser

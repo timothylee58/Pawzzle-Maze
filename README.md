@@ -2,9 +2,9 @@
 
 **New to the repository?** Read the [file guide and complete appendix](FILE_GUIDE.md). Frankie's task notes and starting points are in [Frankie/README.md](Frankie/README.md).
 
-A route-planning dog adventure built with Three.js, a shared deterministic game core, and an optional Fastify/SQLite API. A separate Godot project contains the earlier maze demo.
+A route-planning dog adventure built with Three.js, a shared deterministic game core, and an optional Fastify/SQLite API. The Godot edition ports the same three-level opening campaign using the supplied sprites.
 
-**Godot GamePix export:** the timed Godot game now uses the sprite pack, includes the official GamePix plugin with SDK-v3 lifecycle/pause integration, and exports as a single-threaded browser build. See [setup and build instructions](games/godot/README.md), [verification evidence](docs/GAMEPIX_WEB_VERIFICATION.md), and the [packaged ZIP](releases/pawzzle-maze-gamepix.zip). This does not port the V3 campaign to Godot or add GamePix to the Three.js app.
+**Godot GamePix export:** the Godot V3 campaign uses the sprite pack, includes the official GamePix plugin with SDK-v3 lifecycle/pause integration, and exports as a single-threaded browser build. See [setup and build instructions](games/godot/README.md), [verification evidence](docs/GAMEPIX_WEB_VERIFICATION.md), and the [packaged ZIP](releases/pawzzle-maze-gamepix.zip). The port includes planning, delivery, gates, playback, tutorial unlocks, and saved bests. GamePix integration applies to Godot; the Three.js app is unchanged.
 
 ## Recent update — V3 adventure
 
@@ -19,7 +19,7 @@ A route-planning dog adventure built with Three.js, a shared deterministic game 
 
 **Implemented demo:** the default browser entry is the V3 story adventure. Complete two short playable lessons, then explore The Royal Garden: draw or tap a route, Undo/Clear, press Go, watch treat pickup and delivery to Princess Mocha, and reach the doghouse. Results, tutorial unlocks and personal bests persist on this device. The original practice and daily demos remain at `/legacy.html` and `/daily.html`.
 
-The V3 browser uses the shared simulator locally and does not require the API. It includes keyboard and touch-friendly directional controls, reversible preview objectives, dog playback, automatic gate opening, pause/resume, background-tab pause, and reduced-motion playback. The Godot project remains a separate V1 demo.
+The V3 browser uses the shared simulator locally and does not require the API. It includes keyboard and touch-friendly directional controls, reversible preview objectives, dog playback, automatic gate opening, pause/resume, background-tab pause, and reduced-motion playback. The Godot project now implements this opening campaign with a sprite board and exhaustive cross-language rule checks.
 
 ## V3 backend behavior
 
@@ -41,7 +41,7 @@ Open **http://127.0.0.1:5173**. The web dev server forwards `/api` to the API at
 - **V3 story (`/`):** the default adventure, with two lessons and Royal Garden. Runs locally without an API connection; progress is saved in browser storage.
 - **Legacy practice (`/legacy.html`):** generated mazes, local scores, adjustable difficulty, 60-second rounds, drawing and keyboard input.
 - **Legacy daily (`/daily.html`):** fixed daily layout issued only when the round starts, anonymous HTTP-only cookie identity, server receipt timing, canonical route validation, SQLite persistence, one round per identity/challenge, idempotent submissions, reload resume, end-of-round solution, and same-challenge leaderboard.
-- **Godot:** import `games/godot/project.godot` into Godot 4.7.2 and run with F5. It has its own local generator and local scores, separate from browser daily play. The GamePix Web preset and sprite integration are included.
+- **Godot:** import `games/godot/project.godot` into Godot 4.7.2 and run with F5. It has the same three campaign levels, with its own versioned local progress, separate from browser daily play. The GamePix Web preset and sprite integration are included.
 
 ### Browser-only development
 
@@ -73,7 +73,7 @@ apps/api/src/          Fastify HTTP API, services and SQLite persistence
 packages/game-core/    Legacy generation, route rules and scoring
   v3/                  V3 simulation, plan editor, solver and campaign lifecycle
 tests/browser/         Playwright adventure regression tests
-games/godot/           Separate playable Godot 4 project (earlier mechanics)
+games/godot/           Godot V3 campaign and GamePix web export
 ```
 
 ## Commands
@@ -132,7 +132,7 @@ The current target is [GAME_DESIGN_DEVELOPMENT_V3.md](GAME_DESIGN_DEVELOPMENT_V3
 - Connect the existing local timed-run rules to a timed replay screen.
 - Add sound and mute controls, GamePix lifecycle integration and release packaging checks.
 - Playtest on physical touch devices; add more royal requests and puzzle layouts afterward.
-- Port the V3 rules and adventure presentation to Godot as a separate workstream. Importing the current Godot project does not enable the browser’s V3 mechanics.
+- Extend both editions beyond the opening campaign when adding new chapters or roadmap mechanics. The Godot opening campaign is now ported and tested.
 
 Retained/ordered items, keys and levers are implemented in the shared rules but are not part of the opening browser chapter. Portals remain deferred. Claude-powered hints and dialogue are not integrated, and no Claude API key is required to play.
 

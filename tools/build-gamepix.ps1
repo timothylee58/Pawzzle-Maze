@@ -6,6 +6,8 @@ $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 $project = Join-Path $repo 'games/godot'
 $output = Join-Path $repo 'dist/gamepix'
+& node (Join-Path $repo 'tools/sync-godot-campaign.mjs') --check
+if ($LASTEXITCODE -ne 0) { throw 'Campaign data is stale; run node tools/sync-godot-campaign.mjs from the repository root' }
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 # Keep the checked-in runtime copy synchronized with the standalone sprite pack.
 Copy-Item -Path (Join-Path $repo 'Sprites/*') -Destination (Join-Path $project 'Sprites') -Recurse -Force

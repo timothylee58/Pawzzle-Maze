@@ -1,430 +1,307 @@
 extends Control
-const Rules = preload("res://rules.gd")
-const RoundModel = preload("res://round.gd")
-const Board = preload("res://board.gd")
-var board: Control
-var maze: Dictionary
-var round_model: RefCounted
-var route: Array = []
+const Rules = preload("res://campaign_rules.gd")
+const Board = preload("res://campaign_board.gd")
+const SAVE_KEY = "pawzzle:godot-campaign:rules-3.0"
+var levels: Array = Rules.Levels.LEVELS
+var level_index := 0
+var definition: Dictionary = {}
+var actions: Array = []
+var preview: Dictionary = {}
+var progress: Dictionary = {}
+var playback_index := -1
+var playback_elapsed := 0.0
 var submitted := false
-var mode := "practice"
-var daily_key := ""
-var storage: Dictionary = {"scores":[],"daily":{}}
-var time_label: Label
-var moves_label: Label
-var best_label: Label
-var attempts_label: Label
-var feedback: Label
-var result: Label
+var reduced_motion := false
+var board: Control
+var selector: OptionButton
 var title_label: Label
-var mode_label: Label
-var difficulty: OptionButton
-var start_button: Button
+var feedback: Label
+var objectives: Label
+var stats: Label
+var result_label: Label
+var storage_label: Label
+var go_button: Button
+var undo_button: Button
 var clear_button: Button
-var finish_button: Button
-var optimal_button: Button
-var replay_button: Button
-var overlay: PanelContainer
-var show_optimal := false
-var saved := false
+var next_button: Button
+var pause_button: Button
+var direction_buttons: Array = []
 var body: BoxContainer
 var aspect: AspectRatioContainer
-var trophy: TextureRect
-var pause_began := -1
-var platform_reported := false
-var ink := Color("25382c")
-var muted := Color("62705f")
+var platform: Node
 
-func label(text: String, font_size: int = 16, color: Color = Color("25382c")) -> Label:
-	var l := Label.new()
-	l.text = text
-	l.add_theme_font_size_override("font_size",font_size)
-	l.add_theme_color_override("font_color",color)
-	return l
+func label(parent: Node, text: String, font_size := 18) -> Label:
+	var item := Label.new()
+	item.text = text
+	item.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	item.add_theme_color_override("font_color", Color("294b40"))
+	item.add_theme_font_size_override("font_size", font_size)
+	parent.add_child(item)
+	return item
 
-func button(text: String, callback: Callable) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.custom_minimum_size.y = 42
-	b.pressed.connect(callback)
-	return b
-
-func panel_style(color: Color, radius: int = 8) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = color
-	style.set_corner_radius_all(radius)
-	style.content_margin_left = 16
-	style.content_margin_right = 16
-	style.content_margin_top = 10
-	style.content_margin_bottom = 10
-	return style
+func button(parent: Node, text: String, callback: Callable) -> Button:
+	var item := Button.new()
+	item.text = text
+	item.custom_minimum_size.y = 42
+	item.pressed.connect(callback)
+	parent.add_child(item)
+	return item
 
 func _ready():
-	load_storage()
-	GPX.pause_changed.connect(_on_platform_pause)
-	var base_theme := Theme.new()
-	base_theme.default_font_size = 15
-	base_theme.set_stylebox("normal","Button",panel_style(Color("e4ebdf")))
-	base_theme.set_stylebox("hover","Button",panel_style(Color("d5e0ce")))
-	base_theme.set_stylebox("pressed","Button",panel_style(Color("c5d6bc")))
-	base_theme.set_stylebox("disabled","Button",panel_style(Color("eef1eb")))
-	base_theme.set_color("font_color","Button",ink)
-	base_theme.set_color("font_hover_color","Button",ink)
-	base_theme.set_color("font_pressed_color","Button",ink)
-	base_theme.set_color("font_disabled_color","Button",Color("9aa593"))
-	theme = base_theme
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	theme = Theme.new()
+	theme.default_font_size = 16
+	for kind in ["Button", "OptionButton", "CheckButton"]:
+		for status in ["normal", "hover", "pressed", "disabled", "focus"]:
+			var style := StyleBoxFlat.new()
+			style.bg_color = Color("d0d9cf") if status == "disabled" else Color("365e4d")
+			if status == "hover" or status == "focus": style.bg_color = Color("477c65")
+			style.content_margin_left = 10
+			style.content_margin_right = 10
+			style.content_margin_top = 7
+			style.content_margin_bottom = 7
+			theme.set_stylebox(status, kind, style)
+		for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]: theme.set_color(color_name, kind, Color("fff8e8"))
+		theme.set_color("font_disabled_color", kind, Color("526450"))
+	platform = get_node("/root/GPX")
 	var scroll := ScrollContainer.new()
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	add_child(scroll)
 	var margin := MarginContainer.new()
 	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	for side in ["left","right","top","bottom"]: margin.add_theme_constant_override("margin_"+side,12)
+	for edge in ["left", "right", "top", "bottom"]: margin.add_theme_constant_override("margin_" + edge, 12)
 	scroll.add_child(margin)
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation",8)
-	margin.add_child(root)
-	var top := HBoxContainer.new()
-	root.add_child(top)
-	var brand := label("Pawzzle Maze",24)
-	brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top.add_child(brand)
+	var root_box := VBoxContainer.new()
+	root_box.add_theme_constant_override("separation", 8)
+	margin.add_child(root_box)
+	title_label = label(root_box, "Pawzzle • The Princess’s Kingdom", 26)
 	var nav := HFlowContainer.new()
-	nav.add_theme_constant_override("separation",10)
-	root.add_child(nav)
-	nav.add_child(button("Practice",func(): change_mode("practice")))
-	nav.add_child(button("Daily challenge",func(): change_mode("daily")))
-	nav.add_child(button("Local leaderboard",show_scores))
-	difficulty = OptionButton.new()
-	difficulty.add_item("Introductory · 6 × 6",6)
-	difficulty.add_item("Standard · 9 × 9",9)
-	difficulty.add_item("Advanced · 12 × 12",12)
-	difficulty.item_selected.connect(func(_index): setup())
-	nav.add_child(difficulty)
-	title_label = label("Find your shortest way.",18)
-	root.add_child(title_label)
+	root_box.add_child(nav)
+	selector = OptionButton.new()
+	selector.custom_minimum_size = Vector2(230, 42)
+	nav.add_child(selector)
+	selector.item_selected.connect(load_level)
+	pause_button = button(nav, "Pause", toggle_pause)
+	var motion := CheckButton.new()
+	motion.text = "Reduced motion"
+	motion.toggled.connect(func(value): reduced_motion = value)
+	nav.add_child(motion)
+	feedback = label(root_box, "", 17)
 	body = BoxContainer.new()
-	body.add_theme_constant_override("separation",14)
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(body)
-	var game := VBoxContainer.new()
-	game.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	game.add_theme_constant_override("separation",6)
-	body.add_child(game)
-	var hud := HBoxContainer.new()
-	hud.add_theme_constant_override("separation",8)
-	game.add_child(hud)
-	var values: Array = []
-	for text in ["Time","Moves","Best","Attempts"]:
-		var column := VBoxContainer.new()
-		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		hud.add_child(column)
-		column.add_child(label(text,12,muted))
-		var value := label("—",20)
-		values.append(value)
-		column.add_child(value)
-	time_label = values[0]
-	moves_label = values[1]
-	best_label = values[2]
-	attempts_label = values[3]
+	body.add_theme_constant_override("separation", 18)
+	root_box.add_child(body)
 	aspect = AspectRatioContainer.new()
 	aspect.ratio = 1.0
-	aspect.stretch_mode = AspectRatioContainer.STRETCH_FIT
-	aspect.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	aspect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	game.add_child(aspect)
+	aspect.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	body.add_child(aspect)
 	board = Board.new()
 	aspect.add_child(board)
-	board.cell_pressed.connect(begin_route)
-	board.direction_pressed.connect(func(delta):
-		if active() and not route.is_empty(): step(route.back()+delta))
-	board.cells_crossed.connect(func(cells):
-		for cell in cells:
-			if not board.dragging or not step(cell): break)
-	overlay = PanelContainer.new()
-	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	overlay.add_theme_stylebox_override("panel",panel_style(Color("e7eee0")))
-	board.add_child(overlay)
-	var center := CenterContainer.new()
-	overlay.add_child(center)
-	var intro := VBoxContainer.new()
-	intro.add_theme_constant_override("separation",18)
-	center.add_child(intro)
-	var heading := label("Find the way home.",20)
-	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	intro.add_child(heading)
-	var description := label("Guide the dog to her house.\nFind the shortest route in 60 seconds.",13,muted)
-	description.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	intro.add_child(description)
-	start_button = button("Start maze",start_round)
-	intro.add_child(start_button)
-	var hint := label("The clock starts when the maze appears.",12,muted)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	intro.add_child(hint)
-	var actions := HFlowContainer.new()
-	actions.add_theme_constant_override("separation",12)
-	game.add_child(actions)
-	clear_button = button("Clear path",func():
-		if active():
-			route = [0]
-			submitted = false
-			refresh())
-	actions.add_child(clear_button)
-	finish_button = button("Finish round",func():
-		if active() and not round_model.best.is_empty(): finish_round())
-	actions.add_child(finish_button)
-	feedback = label("Your best completed route is always kept.",13,Color("31734b"))
-	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	feedback.custom_minimum_size.y = 42
-	game.add_child(feedback)
+	board.cell_requested.connect(step_cell)
+	board.direction_requested.connect(add_direction)
 	var rail := VBoxContainer.new()
-	rail.custom_minimum_size.x = 190
-	rail.add_theme_constant_override("separation",14)
+	rail.custom_minimum_size.x = 220
+	rail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_child(rail)
-	rail.add_child(label("Every move counts.",18))
-	var instructions := label("Start at the top-left dog.\nDrag to the house, or use\nthe arrow keys.\n\nBacktrack to revise.\nYour best route stays safe.\nFewest moves wins.",13,muted)
-	rail.add_child(instructions)
-	trophy = TextureRect.new()
-	trophy.texture = preload("res://Sprites/atlas/golden_treat.tres")
-	trophy.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	trophy.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	trophy.custom_minimum_size = Vector2(64,64)
-	rail.add_child(trophy)
-	result = label("",14,ink)
-	result.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rail.add_child(result)
-	optimal_button = button("View optimal route",func():
-		show_optimal = not show_optimal
-		optimal_button.text = "Hide optimal route" if show_optimal else "View optimal route"
-		feedback.text = "One optimal route · dotted line" if show_optimal else "Best completed route kept in pale green."
-		refresh())
-	rail.add_child(optimal_button)
-	replay_button = button("Replay in practice",func():
-		mode = "practice"
-		setup(true))
-	rail.add_child(replay_button)
-	rail.add_child(button("New practice maze",func(): change_mode("practice")))
-	mode_label = label("Practice · Unranked · Scores stay on this device",12,muted)
-	mode_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	root.add_child(mode_label)
-	get_viewport().size_changed.connect(_responsive_layout)
-	_responsive_layout()
-	setup()
-	GPX.game_loaded()
+	label(rail, "PLAN YOUR ADVENTURE", 20)
+	objectives = label(rail, "")
+	stats = label(rail, "", 16)
+	var actions_row := HFlowContainer.new()
+	rail.add_child(actions_row)
+	undo_button = button(actions_row, "Undo", undo)
+	clear_button = button(actions_row, "Clear", clear_plan)
+	go_button = button(actions_row, "Go", start_playback)
+	var directions := HFlowContainer.new()
+	rail.add_child(directions)
+	for item in [["Left", "left"], ["Up", "up"], ["Down", "down"], ["Right", "right"]]:
+		direction_buttons.append(button(directions, item[0], add_direction.bind(item[1])))
+	label(rail, "Arrow keys, adjacent tiles, or drag to plan. Revisiting a tile counts as another move. Undo restores your inventory and gate state.", 15)
+	result_label = label(rail, "", 19)
+	next_button = button(rail, "Next adventure", func(): load_level(level_index + 1))
+	storage_label = label(root_box, "Campaign • No timer • Blue ring = your dog • Crown = Mocha", 14)
+	load_progress()
+	resized.connect(layout)
+	platform.pause_changed.connect(func(_value): board.dragging = false; call_deferred("refresh"))
+	load_level(0)
+	layout()
+	platform.game_loaded()
 
-func _responsive_layout():
-	var screen := get_viewport_rect().size
-	body.vertical = screen.x < 600
-	aspect.custom_minimum_size.y = maxf(240.0, minf(screen.y - 265.0, screen.x - (36.0 if body.vertical else 240.0)))
+func layout():
+	if body == null: return
+	body.vertical = size.x < 600
+	aspect.custom_minimum_size.y = maxf(240, minf(size.y - 185, size.x - (24 if body.vertical else 280)))
 
-func _on_platform_pause(paused: bool):
-	if paused:
-		pause_began = Time.get_ticks_msec()
-		board.dragging = false
-	elif pause_began >= 0:
-		if round_model != null and not round_model.finished:
-			var duration := Time.get_ticks_msec() - pause_began
-			round_model.started += duration
-			round_model.deadline += duration
-		pause_began = -1
+func save_id(d: Dictionary) -> String:
+	return "%s@%d" % [d.levelId, d.levelVersion]
 
-func setup(replay: bool = false):
-	round_model = null
-	route = []
-	submitted = false
-	show_optimal = false
-	saved = false
-	platform_reported = false
-	trophy.hide()
-	board.dragging = false
-	daily_key = Time.get_date_string_from_system(true)
-	if not replay:
-		var n := 8 if mode == "daily" else difficulty.get_selected_id()
-		maze = Rules.generate(n,int(daily_key.replace("-","")) if mode == "daily" else randi())
-	overlay.show()
-	# Do not put the challenge in the viewport until Start.
-	board.maze = {}
-	board.layer.hide()
-	board.queue_redraw()
-	start_button.disabled = false
-	start_button.text = "Review daily result" if mode == "daily" and storage.daily.has(daily_key) else "Start maze"
-	clear_button.disabled = true
-	finish_button.disabled = true
-	difficulty.disabled = mode == "daily"
-	optimal_button.hide()
-	replay_button.hide()
-	result.text = ""
-	feedback.text = "Your best completed route is always kept."
-	title_label.text = "One maze for today." if mode == "daily" else "Find your shortest way."
-	mode_label.text = "Daily · Device-only · Resets 00:00 UTC (08:00 Malaysia)" if mode == "daily" else "Practice · Unranked · Scores stay on this device"
-	if mode == "daily" and storage.daily.has(daily_key):
-		result.text = "Today's local daily run is used.\nReplay it in practice below."
-		replay_button.show()
-	refresh()
+func unlocked(index: int) -> bool:
+	if index < 0 or index >= levels.size(): return false
+	for id in levels[index].get("prerequisites", []):
+		var matched := false
+		for d in levels:
+			if d.levelId == id: matched = progress.has(save_id(d))
+		if not matched: return false
+	return true
 
-func start_round():
-	if mode == "daily" and storage.daily.has(daily_key):
-		var prior: Dictionary = storage.daily[daily_key]
-		board.set_maze(maze)
-		board.layer.show()
-		overlay.hide()
-		round_model = RoundModel.new(maze,Time.get_ticks_msec())
-		round_model.best = prior.get("best",{})
-		round_model.attempts = int(prior.get("attempts",0))
-		route = round_model.best.get("path",[])
-		finish_round()
+func load_level(index: int):
+	if get_tree().paused or not unlocked(index) or playback_index >= 0: return
+	level_index = index
+	definition = levels[index]
+	if not Rules.validate(definition):
+		feedback.text = "This level needs mechanics not supported by this campaign build."
 		return
-	board.set_maze(maze)
-	board.layer.show()
-	overlay.hide()
-	round_model = RoundModel.new(maze,Time.get_ticks_msec())
-	GPX.game_start()
-	route = [0]
-	if mode == "daily":
-		storage.daily[daily_key] = {"status":"active"}
-		persist()
-	clear_button.disabled = false
-	difficulty.disabled = true
-	feedback.text = "Guide the dog to the house. Arrow keys work too."
-	board.grab_focus()
-	refresh()
-
-func active() -> bool:
-	if get_tree().paused: return false
-	if round_model == null or round_model.finished: return false
-	if Time.get_ticks_msec() >= round_model.deadline:
-		feedback.text = "Time’s up. Your best completed route is kept."
-		finish_round()
-		return false
-	return true
-
-func _process(_delta):
-	if round_model != null and not round_model.finished:
-		var remaining: int = maxi(0,round_model.deadline-Time.get_ticks_msec())
-		time_label.text = "%s s" % int(ceil(remaining/1000.0))
-		time_label.add_theme_color_override("font_color",Color("a04c2a") if remaining < 10000 else ink)
-		if remaining == 0: active()
-
-func begin_route(cell: int):
-	if not active(): return
-	if cell == 0:
-		route = [0]
-		submitted = false
-	elif submitted and cell in route:
-		route = route.slice(0,route.find(cell)+1)
-		submitted = false
-	elif route.is_empty() or cell != route.back(): return
-	board.dragging = true
-	refresh()
-
-func step(cell: int) -> bool:
-	if not active(): return false
-	var next := Rules.move(route,cell,maze.graph)
-	if next == route:
-		feedback.text = "That passage is closed. Try an open edge."
-		return false
-	route = next
+	actions = []
 	submitted = false
-	if cell == maze.n*maze.n-1:
-		board.dragging = false
-		submitted = true
-		var attempt: Dictionary = round_model.submit(route,Time.get_ticks_msec())
-		if not attempt.is_empty():
-			feedback.text = "Perfect! %s moves." % attempt.moves if attempt.extra == 0 else "%s%s moves — %s more moves than optimal." % ["New best. " if attempt.improved else "",attempt.moves,attempt.extra]
-			finish_button.disabled = false
-			persist_best()
-		if round_model.finished: finish_round()
+	result_label.text = ""
+	feedback.text = definition.get("instruction", "Fetch the golden treat, deliver it to Mocha’s crown tile, then head home.")
 	refresh()
+	board.grab_focus()
+
+func editable() -> bool:
+	return not get_tree().paused and playback_index < 0
+
+func add_direction(direction: String) -> bool:
+	if not editable() or actions.size() >= 4096: return false
+	var next := Rules.step(definition, preview.state, direction)
+	if next.has("error"):
+		feedback.text = "That passage is closed. Fetch Mocha’s treat before crossing the royal gate."
+		board.dragging = false
+		return false
+	actions.append(direction)
+	submitted = false
+	result_label.text = ""
+	feedback.text = "Keep planning. Revisits count as moves."
+	for event in next.events:
+		match event.type:
+			"discoveryCollected": feedback.text = "Treat found! Carry it to Mocha’s crown tile."
+			"requestFulfilled": feedback.text = "Mocha approves! The royal gate is open."
+			"requestMissingItem": feedback.text = "Mocha is waiting. Fetch the golden treat first."
+	refresh()
+	if preview.complete: feedback.text = "Your route is ready. Press Go to play it."
 	return true
 
-func _unhandled_key_input(event: InputEvent):
-	if not event is InputEventKey or not event.pressed or event.echo: return
-	var directions := {KEY_UP:-maze.n,KEY_DOWN:maze.n,KEY_LEFT:-1,KEY_RIGHT:1}
-	if not directions.has(event.keycode) or not active(): return
-	if route.is_empty(): route = [0]
-	step(route.back()+directions[event.keycode])
-	get_viewport().set_input_as_handled()
+func step_cell(cell: int):
+	if not editable(): return
+	var current := int(preview.state.dogCell)
+	if current == cell: return
+	var n := int(definition.width)
+	var diff := Vector2i(cell % n - current % n, cell / n - current / n)
+	for direction in Rules.DIRECTIONS:
+		if diff == Rules.DIRECTIONS[direction]:
+			add_direction(direction)
+			return
+	board.dragging = false
+
+func undo():
+	if not editable() or actions.is_empty(): return
+	actions.pop_back()
+	submitted = false
+	result_label.text = ""
+	feedback.text = "Last step removed. Inventory and gate preview restored."
+	refresh()
+
+func clear_plan():
+	if not editable(): return
+	actions.clear()
+	submitted = false
+	result_label.text = ""
+	feedback.text = "A fresh plan. Your personal best is safe."
+	refresh()
+
+func start_playback():
+	if not editable() or submitted or not preview.complete: return
+	submitted = true
+	platform.game_start()
+	var key := save_id(definition)
+	var previous: Dictionary = progress.get(key, {})
+	var best: Array = previous.get("best", actions).duplicate()
+	if actions.size() < best.size(): best = actions.duplicate()
+	if Rules.demonstrated(definition, preview):
+		progress[key] = {"best": best, "attempts": int(previous.get("attempts", 0)) + 1}
+		persist()
+	playback_index = 0
+	playback_elapsed = 0
+	board.dragging = false
+	feedback.text = "Off we go! Playing your planned route."
+	refresh()
+
+func _process(delta: float):
+	if playback_index < 0 or get_tree().paused: return
+	playback_elapsed += minf(delta, 0.08)
+	if playback_elapsed < (0.10 if reduced_motion else 0.36): return
+	playback_elapsed = 0
+	playback_index += 1
+	if playback_index >= preview.frames.size() - 1:
+		playback_index = -1
+		var optimum := Rules.optimal_moves(definition)
+		var best: Array = progress.get(save_id(definition), {}).get("best", actions)
+		result_label.text = "%s\n%d moves • Optimal: %d • Extra: %d\nPersonal best: %d moves" % [definition.get("ending", "Home safely!"), actions.size(), optimum, actions.size() - optimum, best.size()]
+		feedback.text = "Adventure complete. Try another route or continue."
+		platform.happyMoment()
+	refresh()
 
 func refresh():
-	moves_label.text = str(maxi(0,route.size()-1))
-	best_label.text = str(round_model.best.moves) if round_model != null and not round_model.best.is_empty() else "—"
-	attempts_label.text = str(round_model.attempts) if round_model != null else "0"
-	if round_model == null:
-		time_label.text = "60 s"
-		time_label.add_theme_color_override("font_color",ink)
-	if not board.maze.is_empty():
-		var best: Array = round_model.best.path if round_model != null and round_model.finished and not round_model.best.is_empty() else []
-		board.show_routes(route,best,maze.optimal if show_optimal else [])
+	if definition.is_empty(): return
+	preview = Rules.simulate(definition, actions)
+	var s: Dictionary = preview.frames[playback_index].state if playback_index >= 0 else preview.state
+	board.definition = definition
+	board.state = s
+	board.route = []
+	for frame in preview.frames: board.route.append(frame.state.dogCell)
+	board.editable = editable()
+	board.queue_redraw()
+	selector.clear()
+	for i in levels.size():
+		selector.add_item(("Done: " if progress.has(save_id(levels[i])) else "") + levels[i].title + (" • Locked" if not unlocked(i) else ""))
+		selector.set_item_disabled(i, not unlocked(i))
+	selector.select(level_index)
+	selector.disabled = not editable()
+	var request_text := ""
+	if not definition.royalRequests.is_empty():
+		request_text = ("Done: Treat found\n" if int(s.collectedDiscoveryMask) else "- Find the golden treat\n") + ("Done: Delivered to Mocha\n" if int(s.fulfilledRequestMask) else "- Deliver at the crown tile\n")
+	objectives.text = definition.title + "\n\n" + request_text + ("Done: Home" if Rules.complete(definition, s) else "- Reach the doghouse")
+	var saved: Dictionary = progress.get(save_id(definition), {})
+	stats.text = "%s • %d moves\nBest: %s • Attempts: %d" % ["Paused" if get_tree().paused else ("Playing" if playback_index >= 0 else "Planning"), actions.size(), str(saved.best.size()) if saved.has("best") else "—", int(saved.get("attempts", 0))]
+	go_button.disabled = not editable() or not preview.complete or submitted
+	undo_button.disabled = not editable() or actions.is_empty()
+	clear_button.disabled = not editable() or actions.is_empty()
+	for item in direction_buttons: item.disabled = not editable()
+	next_button.visible = submitted and playback_index < 0 and unlocked(level_index + 1)
+	next_button.disabled = not editable()
+	pause_button.text = "Resume" if platform.pause_reasons.has("manual") else "Pause"
 
-func finish_round():
-	if round_model == null: return
-	round_model.finished = true
-	board.dragging = false
-	clear_button.disabled = true
-	finish_button.disabled = true
-	difficulty.disabled = mode == "daily"
-	persist_best()
-	if not saved and mode != "daily" and not round_model.best.is_empty():
-		var entry: Dictionary = round_model.best.duplicate(true)
-		entry["challenge"] = maze.id
-		entry["mode"] = mode
-		storage.scores.append(entry)
-		saved = true
-		persist()
-	var best: Dictionary = round_model.best
-	trophy.visible = not best.is_empty()
-	if not best.is_empty() and not platform_reported:
-		platform_reported = true
-		GPX.happyMoment()
-	result.text = "No completed route\nOptimal: %s moves\nAttempts: %s" % [maze.optimal.size()-1,round_model.attempts] if best.is_empty() else "%s\n\nBest route: %s moves\nOptimal: %s moves\nExtra moves: +%s\nBest achieved: %.2f s\nAttempts: %s" % ["Perfectly done." if best.extra == 0 else "Room to improve.",best.moves,maze.optimal.size()-1,best.extra,best.elapsed/1000.0,round_model.attempts]
-	optimal_button.show()
-	replay_button.show()
+func toggle_pause():
+	platform.set_pause_reason("manual", not platform.pause_reasons.has("manual"))
 	refresh()
-
-func change_mode(next: String):
-	if round_model != null and not round_model.finished: finish_round()
-	mode = next
-	setup()
-
-func show_scores():
-	var scores: Array = storage.scores.filter(func(score): return score.challenge == maze.id and score.mode == mode)
-	scores.sort_custom(func(a,b): return a.extra < b.extra or (a.extra == b.extra and a.elapsed < b.elapsed))
-	result.text = "Local leaderboard\nSame maze and mode · Unverified\n"
-	var rank := 0
-	for i in scores.size():
-		if i == 0 or scores[i].extra != scores[i-1].extra or scores[i].elapsed != scores[i-1].elapsed: rank = i+1
-		result.text += "\n#%s · %s moves · +%s · %.2f s" % [rank,scores[i].moves,scores[i].extra,scores[i].elapsed/1000.0]
-	if scores.is_empty(): result.text += "\nNo completed runs for this maze yet."
-
-func persist_best():
-	if mode == "daily" and round_model != null:
-		storage.daily[daily_key] = {"status":"finished" if round_model.finished else "active","best":round_model.best,"attempts":round_model.attempts}
-		if not round_model.best.is_empty():
-			var entry: Dictionary = round_model.best.duplicate(true)
-			entry["challenge"] = maze.id
-			entry["mode"] = mode
-			storage.scores = storage.scores.filter(func(score): return not (score.challenge == maze.id and score.mode == "daily"))
-			storage.scores.append(entry)
-		persist()
 
 func persist():
 	if "--test-mode" in OS.get_cmdline_user_args(): return
+	var data := JSON.stringify(progress)
 	if OS.has_feature("web"):
-		GPX.setItem("pawzzle-maze-results-v1", JSON.stringify(storage))
-		return
-	var file := FileAccess.open("user://maze-results.json",FileAccess.WRITE)
-	if file: file.store_string(JSON.stringify(storage))
+		platform.setItem(SAVE_KEY, data)
+		if platform.getItem(SAVE_KEY) != data: storage_label.text = "Storage unavailable • Progress lasts this visit."
+	else:
+		var file := FileAccess.open("user://campaign-v3.json", FileAccess.WRITE)
+		if file: file.store_string(data)
+		else: storage_label.text = "Storage unavailable • Progress lasts this visit."
 
-func load_storage():
+func load_progress():
 	if "--test-mode" in OS.get_cmdline_user_args(): return
-	if OS.has_feature("web"):
-		var value = GPX.getItem("pawzzle-maze-results-v1")
-		if value != null:
-			var parsed = JSON.parse_string(str(value))
-			if parsed is Dictionary and parsed.get("scores") is Array and parsed.get("daily") is Dictionary:
-				storage = parsed
+	var raw = platform.getItem(SAVE_KEY) if OS.has_feature("web") else (FileAccess.get_file_as_string("user://campaign-v3.json") if FileAccess.file_exists("user://campaign-v3.json") else null)
+	restore_progress(raw)
+
+func restore_progress(raw):
+	if raw == null: return
+	var saved = JSON.parse_string(str(raw))
+	if not saved is Dictionary:
+		storage_label.text = "Saved progress could not be read • Starting a fresh campaign."
 		return
-	if FileAccess.file_exists("user://maze-results.json"):
-		var parsed = JSON.parse_string(FileAccess.get_file_as_string("user://maze-results.json"))
-		if parsed is Dictionary and parsed.has("scores") and parsed.has("daily"): storage = parsed
+	for d in levels:
+		var key := save_id(d)
+		var record = saved.get(key)
+		if not record is Dictionary or not record.get("best") is Array: continue
+		var attempt = Rules.simulate(d, record.best)
+		if attempt.has("error") or not Rules.demonstrated(d, attempt): continue
+		if not (record.get("attempts") is float or record.get("attempts") is int): continue
+		progress[key] = {"best": record.best, "attempts": maxi(1, int(record.attempts))}
