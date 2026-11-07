@@ -1,8 +1,8 @@
-# Pawsome — Game Brief
+## Pawzzle-Maze — Game Brief
 
 ## What we are making
 
-**Pawsome** is a solo-player, 2D maze adventure. Guide a dog through a small maze, find a treat to win over the princess dog guarding the way, solve a simple obstacle, and reach the exit before time runs out.
+**Pawzzle-Maze** is a solo-player, 2D maze adventure. Guide a dog through a small maze, find a treat to win over the princess dog guarding the way, solve a simple obstacle, and reach the exit before time runs out.
 
 The aim is one finished, enjoyable level that we can build and play within the available time. The challenge comes from the maze and its small set of interactions, not from making many levels.
 
