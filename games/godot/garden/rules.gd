@@ -89,28 +89,38 @@ func won(level: Dictionary, state: Dictionary) -> bool:
 func state_key(state: Dictionary) -> int:
 	return state.pos * 16 + state.mask * 2 + int(state.key)
 
-func solve(level: Dictionary, start: Dictionary = {}) -> Array:
+## Exact shortest route through position, collected-bone mask and key possession.
+## Every legal tile move costs one; blocked attempts never enter the queue.
+## Revisiting a tile with different inventory is a different search state.
+func solve_result(level: Dictionary, start: Dictionary = {}) -> Dictionary:
 	if start.is_empty(): start = initial()
 	var nodes: Array = [{"state": start, "prev": -1}]
 	var seen: Dictionary = {state_key(start): true}
 	var at := 0
-	# At most n*n positions * 8 masks * 2 key states.
-	while at < nodes.size() and at < int(level.size) * int(level.size) * 16:
+	# Each of the n*n*8*2 states is queued at most once.
+	while at < nodes.size():
 		var state: Dictionary = nodes[at].state
 		if won(level, state):
 			var route: Array = []
 			var j := at
 			while nodes[j].prev >= 0:
-				route.push_front(nodes[j].state.pos)
+				route.append(nodes[j].state.pos)
 				j = nodes[j].prev
-			return route
+			route.reverse()
+			return {"solvable": true, "minimum_steps": route.size(), "route": route, "states_visited": at + 1}
 		for p in level.edges[state.pos]:
+			# Share gameplay transitions, including hard-mode key collection.
 			var next := move(level, state, p)
 			if not next.is_empty() and not seen.has(state_key(next)):
 				seen[state_key(next)] = true
 				nodes.append({"state": next, "prev": at})
 		at += 1
-	return []
+	# -1 explicitly distinguishes unreachable from an already-won state (0).
+	return {"solvable": false, "minimum_steps": -1, "route": [], "states_visited": at}
+
+# Preserve the route-only API used by playback and legacy parity checks.
+func solve(level: Dictionary, start: Dictionary = {}) -> Array:
+	return solve_result(level, start).route
 
 # Place objectives on a simple route, and replay it before accepting the maze.
 func generate(n: int, value: String, hard: bool = false) -> Dictionary:

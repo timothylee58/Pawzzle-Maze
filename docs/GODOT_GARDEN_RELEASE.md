@@ -192,3 +192,24 @@ and uses compact checklist padding with readable text.
   it suitable here. A* is possible with an admissible objective-aware heuristic;
   Kruskal alone solves a spanning-tree problem, not the required shortest route.
 - GamePix build: 3LmphiOxd27mLee2HQLnOusnSSP (12,882,313-byte ZIP).
+
+## Exact minimum-step BFS (approved implementation)
+
+- Exposed `solve_result(level, start)` with solvable, minimum_steps, route and
+  states_visited. It shares gameplay transitions and searches position, three
+  bone bits and key possession; each state is visited once. Maximum 3,136 states
+  on a 14x14 grid. Blocked moves cost nothing; legal moves cost one step.
+- A completed start returns zero remaining steps; unreachable objectives return
+  solvable=false and minimum_steps=-1. Prior moves do not inflate remaining cost.
+  The route-only solve API remains compatible with existing replay fixtures.
+- Sidebar shows the exact start-to-finish minimum for the selected mode, computed
+  once per generated puzzle. Restart preserves that target. Completion compares
+  actual steps with the target and marks a matching run as Perfect route.
+- Validation: 2,629 solver assertions (independent Dijkstra oracle, early key,
+  inventory-dependent revisits, solved/unreachable/partial starts, all sizes and
+  both modes), 2,256 gameplay assertions, and 18,100 legacy parity assertions.
+  All pass. Slowest measured generated search: 13.39 ms on this workstation.
+- Native Godot reports zero errors. Exported browser puzzle completed in exactly
+  12 steps, matching its displayed minimum and showing Perfect route.
+- Export archive: 12,882,965 bytes. Evidence: garden-bfs-success.jpg.
+- GamePix release build: 3LmrHMZwlr2Wz34YGvAwcAPmKBL.

@@ -7,7 +7,8 @@ var rules = Rules.new()
 var level: Dictionary = {}
 var state: Dictionary = {}
 var history: Array = []
-var optimal := 0
+var optimal := -1
+var minimum_label: Label
 var saves: Dictionary = {"bests": {}, "muted": false}
 var board: Control
 var sidebar_scroll: ScrollContainer
@@ -248,6 +249,9 @@ func _ready() -> void:
 	hard_toggle.tooltip_text = "Toggle Hard mode and generate a new garden"
 	setup.add_child(hard_toggle)
 	setup.add_child(label("Hard mode: collect all bones before picking up the key.", 14))
+	minimum_label = label("", 15)
+	minimum_label.tooltip_text = "Fewest legal tile moves from the start to collect all three bones and the key, then reach home in the selected mode."
+	setup.add_child(minimum_label)
 	objectives.add_child(label("YOUR CHECKLIST", 17))
 	checked_icon = _svg_icon('<rect x="2" y="2" width="20" height="20" rx="5" fill="#229c7a"/><path d="m6 12 4 4 8-9" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>')
 	unchecked_icon = _svg_icon('<rect x="2" y="2" width="20" height="20" rx="5" fill="#fff9e9" stroke="#8ca89c" stroke-width="2"/>')
@@ -362,7 +366,7 @@ func _resize() -> void:
 func generate() -> void:
 	var seed_value := str(Time.get_ticks_usec()) + "-" + str(randi())
 	level = rules.generate(size_select.get_selected_id(), seed_value, hard_toggle.button_pressed)
-	optimal = rules.solve(level).size()
+	optimal = rules.solve_result(level).minimum_steps
 	restart()
 
 func _process(delta: float) -> void:
@@ -386,6 +390,7 @@ func _hide_help() -> void:
 	_paused(get_tree().paused)
 
 func restart() -> void:
+	minimum_label.text = "Minimum steps: %d" % optimal if optimal >= 0 else "No solution"
 	state = rules.initial()
 	history.clear()
 	board.cancel_drag()
@@ -417,7 +422,8 @@ func step(to: int) -> void:
 		if state.moves < int(saves.bests.get(key, 999999)):
 			saves.bests[key] = state.moves
 			_save()
-		result.text = "Mocha is home!\n%s" % timer_label.text
+		result.text = "Mocha is home!\n%s\nYour steps: %d\nMinimum steps: %d" % [timer_label.text, state.moves, optimal]
+		if optimal >= 0 and state.moves == optimal: result.text += "\nPerfect route!"
 		overlay.show()
 		for control in direction_buttons: control.disabled = true
 		get_node("/root/GPX").happyMoment()

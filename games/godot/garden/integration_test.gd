@@ -53,6 +53,8 @@ func run() -> void:
 	for to in route: game.step(to)
 	check(game.overlay.visible and game.rules.won(game.level, game.state), "complete puzzle")
 	check(not game.timer_running, "timer stops at win")
+	check(game.minimum_label.text == "Minimum steps: %d" % route.size(), "sidebar displays start optimum")
+	check(game.result.text.contains("Your steps: %d" % route.size()) and game.result.text.contains("Minimum steps: %d" % route.size()) and game.result.text.contains("Perfect route!"), "completion compares actual and minimum steps")
 	check(game.saves.bests[game.best_key()] == route.size(), "best stored")
 	game.saves = {"bests": {}, "muted": false}
 	game._load_save()
