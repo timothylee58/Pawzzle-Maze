@@ -11,7 +11,7 @@ stage = repo / 'dist/garden-source'
 out = repo / 'dist/garden-gamepix'
 stage.mkdir(parents=True, exist_ok=True)
 out.mkdir(parents=True, exist_ok=True)
-for name in ['main.gd', 'main.tscn', 'rules.gd', 'board.gd']:
+for name in ['main.gd', 'main.tscn', 'rules.gd', 'board.gd', 'tutorial_strip.gd']:
     target = stage / 'garden' / name
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source / 'garden' / name, target)

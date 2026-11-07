@@ -9,6 +9,8 @@ var board_rect := Rect2()
 var cell_size := 1.0
 var locked := false
 var dragging := false
+var blur_layer: ColorRect
+var blur_copy: BackBufferCopy
 var active_touch := -1
 var drag_position := Vector2.ZERO
 
@@ -17,6 +19,25 @@ func _ready() -> void:
 	resized.connect(queue_redraw)
 	for item in ["princess_mocha", "wall_bush", "bone", "key", "dog_house"]:
 		textures[item] = load("res://Sprites/textures/" + item + ".png")
+	blur_copy = BackBufferCopy.new()
+	blur_copy.copy_mode = BackBufferCopy.COPY_MODE_VIEWPORT
+	blur_copy.hide()
+	add_child(blur_copy)
+	blur_layer = ColorRect.new()
+	blur_layer.name = "PauseBlur"
+	blur_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	blur_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var shader := Shader.new()
+	shader.code = "shader_type canvas_item; uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear_mipmap; void fragment() { COLOR = vec4(textureLod(screen_texture, SCREEN_UV, 3.0).rgb, 1.0); }"
+	var blur_material := ShaderMaterial.new()
+	blur_material.shader = shader
+	blur_layer.material = blur_material
+	blur_layer.hide()
+	add_child(blur_layer)
+
+func set_blurred(value: bool) -> void:
+	if blur_layer != null: blur_layer.visible = value
+	if blur_copy != null: blur_copy.visible = value
 
 func show_board(data: Dictionary, current: Dictionary, history: Array, hint_cell: int) -> void:
 	level = data

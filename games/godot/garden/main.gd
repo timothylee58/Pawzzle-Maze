@@ -1,6 +1,7 @@
 extends Control
 const Rules = preload("res://garden/rules.gd")
 const Board = preload("res://garden/board.gd")
+const TutorialStrip = preload("res://garden/tutorial_strip.gd")
 const SAVE_KEY := "pawzzle-garden-godot-v1"
 var rules = Rules.new()
 var level: Dictionary = {}
@@ -10,13 +11,18 @@ var optimal := 0
 var saves: Dictionary = {"bests": {}, "muted": false}
 var board: Control
 var size_select: OptionButton
-var stats: Label
+var setup_panel: PanelContainer
+var mode_select: OptionButton
+var header: Control
+var header_left: VBoxContainer
+var header_right: VBoxContainer
+var title_center: CenterContainer
+var direction_buttons: Array = []
 var timer_label: Label
 var help_cover: PanelContainer
 var help_scroll: ScrollContainer
 var elapsed := 0.0
 var timer_running := false
-var status: Label
 var objective_rows: Array = []
 var objective_checks: Array = []
 var objective_labels: Array = []
@@ -107,25 +113,49 @@ func _ready() -> void:
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override("separation", 18)
 	margin.add_child(page)
-	var header := HBoxContainer.new()
+	header = Control.new()
+	header.custom_minimum_size.y = 170
 	page.add_child(header)
-	var title := VBoxContainer.new()
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(title)
-	title.add_child(label("MOCHA'S GARDEN", 12))
-	title.add_child(label("Pawzzle Maze", 28))
-	var header_buttons := VBoxContainer.new()
-	header.add_child(header_buttons)
-	timer_label = label("Time 00:00", 22)
+	title_center = CenterContainer.new()
+	title_center.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	title_center.custom_minimum_size.y = 44
+	header.add_child(title_center)
+	var brand := HBoxContainer.new()
+	brand.add_theme_constant_override("separation", 10)
+	title_center.add_child(brand)
+	var paw := TextureRect.new()
+	paw.texture = _svg_icon('<ellipse cx="12" cy="16" rx="6.5" ry="5" fill="#174f50"/><ellipse cx="4.5" cy="9" rx="2.5" ry="3.3" transform="rotate(-25 4.5 9)" fill="#174f50"/><ellipse cx="9" cy="5" rx="2.5" ry="3.3" fill="#174f50"/><ellipse cx="15" cy="5" rx="2.5" ry="3.3" fill="#174f50"/><ellipse cx="19.5" cy="9" rx="2.5" ry="3.3" transform="rotate(25 19.5 9)" fill="#174f50"/>')
+	paw.custom_minimum_size = Vector2(34, 34)
+	paw.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	paw.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	brand.add_child(paw)
+	var brand_title := label("Pawzzle Maze", 28)
+	brand_title.autowrap_mode = TextServer.AUTOWRAP_OFF
+	brand.add_child(brand_title)
+	header_left = VBoxContainer.new()
+	header.add_child(header_left)
+	header_left.add_child(button("Restart", restart))
+	header_right = VBoxContainer.new()
+	header.add_child(header_right)
+	timer_label = label("00:00", 22)
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	header_buttons.add_child(timer_label)
-	header_buttons.add_child(button("How to play", _show_help))
+	timer_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	header_right.add_child(timer_label)
+	header_right.add_child(button("How to play", _show_help))
 	sound = button("Sound off" if saves.muted else "Sound on", _toggle_sound)
-	header_buttons.add_child(sound)
-	header_buttons.add_child(button("Pause", func(): get_node("/root/GPX").set_pause_reason("manual", true)))
+	header_right.add_child(sound)
+	header_right.add_child(button("Pause", func(): get_node("/root/GPX").set_pause_reason("manual", true)))
+	header.resized.connect(_layout_header)
+	header_right.resized.connect(_layout_header)
 	layout = BoxContainer.new()
 	layout.add_theme_constant_override("separation", 20)
 	page.add_child(layout)
+	setup_panel = panel()
+	setup_panel.custom_minimum_size.x = 190
+	layout.add_child(setup_panel)
+	var setup := VBoxContainer.new()
+	setup.add_theme_constant_override("separation", 14)
+	setup_panel.add_child(setup)
 	play_panel = VBoxContainer.new()
 	play_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	play_panel.add_theme_constant_override("separation", 10)
@@ -134,10 +164,6 @@ func _ready() -> void:
 	board.custom_minimum_size = Vector2(280, 450)
 	board.cell_pressed.connect(step)
 	play_panel.add_child(board)
-	var toolbar := HBoxContainer.new()
-	toolbar.add_theme_constant_override("separation", 8)
-	play_panel.add_child(toolbar)
-	toolbar.add_child(button("Restart", restart))
 	var movement_title := label("MOVE MOCHA", 14)
 	movement_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	play_panel.add_child(movement_title)
@@ -166,7 +192,8 @@ func _ready() -> void:
 			control.add_theme_stylebox_override(appearance, compact)
 		control.custom_minimum_size = Vector2(82, 48)
 		control.focus_mode = Control.FOCUS_NONE
-		control.tooltip_text = "Move Mocha " + entry[0].to_lower()
+		control.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+		direction_buttons.append(control)
 		directions.add_child(control)
 	var movement_help := label("Drag Mocha along a path, tap an adjacent tile, or use the direction buttons.", 13)
 	movement_help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -177,16 +204,26 @@ func _ready() -> void:
 	var objectives := VBoxContainer.new()
 	objectives.add_theme_constant_override("separation", 18)
 	objectives_panel.add_child(objectives)
-	objectives.add_child(label("Garden size", 15))
+	setup.add_child(label("Garden size", 15))
 	size_select = OptionButton.new()
 	for n in range(5, 15): size_select.add_item("%d × %d" % [n, n], n)
 	size_select.selected = 1
 	size_select.custom_minimum_size.y = 44
 	size_select.add_theme_stylebox_override("normal", style("#f1e6cc", 10))
 	size_select.add_theme_color_override("font_color", Color("#174f50"))
-	objectives.add_child(size_select)
+	setup.add_child(size_select)
 	size_select.item_selected.connect(func(_index): generate())
-	objectives.add_child(button("New puzzle", generate, true))
+	setup.add_child(button("New puzzle", generate, true))
+	setup.add_child(label("Mode", 15))
+	mode_select = OptionButton.new()
+	mode_select.add_item("Normal", 0)
+	mode_select.add_item("Hard", 1)
+	mode_select.custom_minimum_size.y = 44
+	mode_select.add_theme_stylebox_override("normal", style("#f1e6cc", 10))
+	mode_select.add_theme_color_override("font_color", Color("#174f50"))
+	setup.add_child(mode_select)
+	mode_select.item_selected.connect(func(_index): generate())
+	setup.add_child(label("Hard mode: collect all bones before picking up the key.", 14))
 	objectives.add_child(label("YOUR CHECKLIST", 17))
 	checked_icon = _svg_icon('<rect x="2" y="2" width="20" height="20" rx="5" fill="#229c7a"/><path d="m6 12 4 4 8-9" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>')
 	unchecked_icon = _svg_icon('<rect x="2" y="2" width="20" height="20" rx="5" fill="#fff9e9" stroke="#8ca89c" stroke-width="2"/>')
@@ -215,10 +252,6 @@ func _ready() -> void:
 		caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		items.add_child(caption)
 		objective_labels.append(caption)
-	status = label("", 15)
-	objectives.add_child(status)
-	stats = label("", 14)
-	objectives.add_child(stats)
 	overlay = _make_overlay()
 	var win_box := VBoxContainer.new()
 	win_box.add_theme_constant_override("separation", 16)
@@ -227,28 +260,41 @@ func _ready() -> void:
 	result = label("", 20)
 	win_box.add_child(result)
 	win_box.add_child(button("Another adventure", next_puzzle, true))
-	win_box.add_child(button("Try fewer moves", restart))
+	win_box.add_child(button("Play again", restart))
 	pause_cover = _make_overlay()
+	pause_cover.add_theme_stylebox_override("panel", style("#174f5066", 0))
 	pause_cover.process_mode = Node.PROCESS_MODE_ALWAYS
 	var pause_box := VBoxContainer.new()
 	pause_cover.get_meta("card").add_child(pause_box)
 	pause_box.add_child(label("Garden paused", 30))
 	pause_box.add_child(label("Your puzzle is waiting right here.", 18))
 	pause_box.add_child(button("Resume", func(): get_node("/root/GPX").set_pause_reason("manual", false), true))
-	help_cover = _make_overlay()
+	help_cover = panel()
+	help_cover.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	help_cover.add_theme_stylebox_override("panel", style("#8fd1db", 0))
 	help_cover.process_mode = Node.PROCESS_MODE_ALWAYS
-	var help_box := VBoxContainer.new()
-	help_box.add_theme_constant_override("separation", 14)
-	help_cover.get_meta("card").add_child(help_box)
-	help_box.add_child(label("How to play", 26))
+	add_child(help_cover)
 	help_scroll = ScrollContainer.new()
 	help_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	help_scroll.custom_minimum_size.y = 300
-	help_box.add_child(help_scroll)
-	var instructions := label("Collect 3 bones and the golden key, then reach the doghouse.\n\nTouch or mouse: press Mocha and drag along open paths. Lift to stop. Hedges block movement. You can also tap a neighbouring tile or use the direction buttons.\n\nKeyboard: arrow keys / WASD.\n\nThe timer starts on your first move and pauses with help or pause. New puzzle makes a random garden; Restart resets this one.", 16)
-	instructions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	help_scroll.add_child(instructions)
-	help_box.add_child(button("Let's play", _hide_help, true))
+	help_cover.add_child(help_scroll)
+	var help_box := VBoxContainer.new()
+	help_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	help_box.add_theme_constant_override("separation", 22)
+	help_scroll.add_child(help_box)
+	var back := button("Back to game", _hide_help, true)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	help_box.add_child(back)
+	var help_title := label("How to play", 30)
+	help_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	help_box.add_child(help_title)
+	var tutorial := TutorialStrip.new()
+	tutorial.name = "TutorialStrip"
+	help_box.add_child(tutorial)
+	help_box.add_child(label("Help Mocha collect all three bones and one key, then return to the doghouse.", 22))
+	help_box.add_child(label("NORMAL MODE\nCollect the bones and key in any order, then go home.\n\nHARD MODE\nCollect all three bones first. The key stays in the garden until you have every bone. If you walk over it early, come back for it later.", 18))
+	help_box.add_child(label("Drag Mocha along open paths, tap an adjacent tile, or use the direction buttons. On a keyboard, use arrow keys or WASD. Hedges block movement.\n\nThe timer starts on your first move and pauses while this page is open. Restart resets the current garden; New puzzle generates another.", 16))
+	help_cover.hide()
+	scroll.show()
 	get_node("/root/GPX").pause_changed.connect(_paused)
 	resized.connect(_resize)
 	generate()
@@ -278,19 +324,22 @@ func _make_overlay() -> PanelContainer:
 
 func _resize() -> void:
 	narrow = size.x < 960
-	if help_scroll != null: help_scroll.custom_minimum_size.y = clampf(size.y - 200, 140, 340)
-	for popup in [overlay, pause_cover, help_cover]:
+	_layout_header()
+	for popup in [overlay, pause_cover]:
 		if popup != null: popup.get_meta("card").custom_minimum_size.x = minf(440, size.x - 40)
 	layout.vertical = narrow
+	setup_panel.custom_minimum_size.x = 0 if narrow else 190
+	layout.move_child(setup_panel, 1 if narrow else 0)
+	layout.move_child(play_panel, 0 if narrow else 1)
 	objectives_panel.custom_minimum_size.x = 0 if narrow else 230
 	# 125% of the prior grid target, capped to the available width on phones.
 	var old_target := clampf(minf(size.x - 60, size.y * 0.60) if narrow else minf(size.x - 540, size.y * 0.65), 260, 580)
-	var available := size.x - (40 if narrow else 310)
+	var available := size.x - (40 if narrow else 520)
 	board.custom_minimum_size.y = minf(available, old_target * 1.25)
 
 func generate() -> void:
 	var seed_value := str(Time.get_ticks_usec()) + "-" + str(randi())
-	level = rules.generate(size_select.get_selected_id(), seed_value)
+	level = rules.generate(size_select.get_selected_id(), seed_value, mode_select.selected == 1)
 	optimal = rules.solve(level).size()
 	restart()
 
@@ -301,14 +350,16 @@ func _process(delta: float) -> void:
 
 func _update_timer() -> void:
 	var seconds := int(elapsed)
-	timer_label.text = "Time %02d:%02d" % [seconds / 60, seconds % 60]
+	timer_label.text = "%02d:%02d" % [int(seconds / 60.0), seconds % 60]
 
 func _show_help() -> void:
+	scroll.hide()
 	help_cover.show()
 	get_node("/root/GPX").set_pause_reason("help", true)
 
 func _hide_help() -> void:
 	help_cover.hide()
+	scroll.show()
 	get_node("/root/GPX").set_pause_reason("help", false)
 	_paused(get_tree().paused)
 
@@ -320,7 +371,7 @@ func restart() -> void:
 	timer_running = false
 	_update_timer()
 	overlay.hide()
-	status.text = "Collect all three bones, find the golden key, then head home."
+	for control in direction_buttons: control.disabled = false
 	refresh()
 
 func begin() -> void:
@@ -331,16 +382,12 @@ func begin() -> void:
 
 func step(to: int) -> void:
 	if get_tree().paused or rules.won(level, state): return
-	begin()
 	var next: Dictionary = rules.move(level, state, to)
-	if next.is_empty():
-		status.text = "Find the golden key to unlock home." if to == level.home and not state.key else "That path is blocked. Choose a neighbouring open tile."
-		return
+	if next.is_empty(): return
+	begin()
 	timer_running = true
 	history.append(state.duplicate())
 	state = next
-	status.text = "Every step counts. A little backtracking is part of the adventure."
-	if state.pos == level.home and state.mask != 7: status.text = "There are still bones to collect before your royal nap!"
 	if rules.won(level, state):
 		var key := best_key()
 		timer_running = false
@@ -348,8 +395,9 @@ func step(to: int) -> void:
 		if state.moves < int(saves.bests.get(key, 999999)):
 			saves.bests[key] = state.moves
 			_save()
-		result.text = "Home in %d moves!\n%s\nShortest route: %d moves." % [state.moves, timer_label.text, optimal]
+		result.text = "Mocha is home!\n%s" % timer_label.text
 		overlay.show()
+		for control in direction_buttons: control.disabled = true
 		get_node("/root/GPX").happyMoment()
 	refresh()
 
@@ -371,13 +419,9 @@ func next_puzzle() -> void:
 	generate()
 
 func best_key() -> String:
-	return str(level.size) + ":" + level.seed
+	return ("hard:" if level.get("hard", false) else "normal:") + str(level.size) + ":" + level.seed
 
 func refresh() -> void:
-	var count := 0
-	for i in 3:
-		if state.mask & (1 << i): count += 1
-	stats.text = "%d moves  ·  %d/3 bones" % [state.moves, count]
 	for i in 5:
 		var complete: bool = bool(state.mask & (1 << i)) if i < 3 else bool(state.key) if i == 3 else rules.won(level, state)
 		objective_checks[i].texture = checked_icon if complete else unchecked_icon
@@ -395,6 +439,8 @@ func _toggle_sound() -> void:
 func _paused(value: bool) -> void:
 	pause_cover.visible = value and not help_cover.visible
 	board.locked = value
+	board.set_blurred(value)
+	for control in direction_buttons: control.disabled = value
 	if value: board.cancel_drag()
 	if music != null: music.stream_paused = value
 
@@ -414,3 +460,10 @@ func _save() -> void:
 	else:
 		var file := FileAccess.open("user://garden-v1.json", FileAccess.WRITE)
 		if file != null: file.store_string(raw)
+func _layout_header() -> void:
+	if header == null or header_right == null: return
+	var compact := size.x < 600
+	header.custom_minimum_size.y = 270 if compact else 220
+	header_left.position = Vector2(0, 50 if compact else 0)
+	header_right.position = Vector2(maxf(0, header.size.x - header_right.size.x), 50 if compact else 0)
+

@@ -98,3 +98,27 @@ Mobile/layout build 3LmcphowGN4CUB1eCEtV0lygONI was processed and resubmitted
 to the same jam entry. GamePix mobile-friendly flag and player instructions
 were updated for drag controls and sizes 5-14.
 
+
+## Hard mode, tutorial and focused controls revision
+
+- Added Normal/Hard selection. Hard mode leaves the key uncollected until all
+  three bones are collected; crossing its tile early is allowed.
+- Arrow buttons only attempt movement. Blocked attempts leave game state,
+  timer, focus and page unchanged.
+- Added a dedicated How to play page with a 1x10 sprite strip: Mocha at 0,
+  bones at 2/4/5, key at 7, doghouse at 9, plus mode and control instructions.
+- Pausing blurs the board; resuming restores it. Settings sit left of the board
+  on desktop and stack on narrow screens. Restart is top-left; a paw and
+  centered title head the screen. Timer displays only elapsed time.
+- Removed move/bone-count status and the repeated objective sentence.
+- Validation: 205 integration checks and 18,100 legacy parity checks pass;
+  80 hard gardens spanning sizes 5-14 are solvable with the required pickup order.
+  Native and exported browser checks confirm tutorial navigation, board blur,
+  blocked arrows and one-tile movement. Physical mobile/Safari remain untested.
+- Latest headless integration run completed without the earlier teardown warning.
+
+Evidence: garden-paused-blur.jpg and garden-tutorial.jpg.
+
+GamePix build 3LmgamJYNBc8c9GlhQMzXSEhmAb processed successfully and was
+resubmitted to the existing AE5L7D jam entry on 7 November 2026.
+The 390x844 browser iframe also renders the complete 1x10 tutorial correctly.

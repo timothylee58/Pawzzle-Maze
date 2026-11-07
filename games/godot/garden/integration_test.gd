@@ -17,6 +17,15 @@ func run() -> void:
 	game.level = game.rules.generate(6, "PAW-1024")
 	game.optimal = game.rules.solve(game.level).size()
 	game.restart()
+	var initial: Dictionary = game.state.duplicate()
+	var original_seed: String = game.level.seed
+	for index in [0, 1, 2]:
+		game.direction_buttons[index].pressed.emit()
+		check(game.state == initial and game.history.is_empty() and not game.timer_running and not game.begun, "blocked arrow has no side effects")
+		check(game.level.seed == original_seed and game.scroll.visible and not game.help_cover.visible, "arrow preserves screen and puzzle")
+	game.direction_buttons[3].pressed.emit()
+	check(game.state.pos == 1 and game.state.moves == 1 and game.history.size() == 1, "right button moves exactly one tile")
+	game.restart()
 	game._process(5.0)
 	check(game.elapsed == 0, "timer waits for first move")
 	var route: Array = game.rules.solve(game.level)
@@ -28,7 +37,7 @@ func run() -> void:
 	var frozen: float = game.elapsed
 	game._process(5.0)
 	game.step(route[1])
-	check(game.elapsed == frozen and game.state.moves == 1, "pause freezes timer and input")
+	check(game.elapsed == frozen and game.state.moves == 1 and game.board.blur_layer.visible, "pause freezes timer/input and enables blur")
 	gpx.set_pause_reason("browser", true)
 	gpx.set_pause_reason("manual", false)
 	check(paused, "overlapping pauses")
@@ -36,7 +45,7 @@ func run() -> void:
 	game._show_help()
 	check(paused and game.help_cover.visible and not game.pause_cover.visible, "help pauses with its own overlay")
 	game._hide_help()
-	check(not paused and not game.help_cover.visible, "help closes and resumes")
+	check(not paused and not game.help_cover.visible and game.scroll.visible and not game.board.blur_layer.visible, "help returns to game and clears blur")
 	game.restart()
 	check(game.elapsed == 0 and not game.timer_running, "restart resets timer")
 	for to in route: game.step(to)
@@ -92,6 +101,23 @@ func run() -> void:
 			for cell in path:
 				state = game.rules.move(level, state, cell)
 			check(not path.is_empty() and game.rules.won(level, state), "solvable size %d sample %d" % [n, sample])
+	# Hard mode: key remains until all 3 bones, even when crossing its tile.
+	var hard_level: Dictionary = game.rules.generate(6, "hard-key-test", true)
+	for mask in 8:
+		var before := {"pos": hard_level.edges[hard_level.key][0], "mask": mask, "key": false, "moves": 0}
+		var after: Dictionary = game.rules.move(hard_level, before, hard_level.key)
+		check(not after.is_empty() and after.key == (mask == 7), "hard key gate mask %d" % mask)
+	for n in range(5, 15):
+		for sample in 8:
+			var level: Dictionary = game.rules.generate(n, "hard-%d-%d" % [n, sample], true)
+			var path: Array = game.rules.solve(level)
+			var state: Dictionary = game.rules.initial()
+			var valid_order := true
+			for cell in path:
+				state = game.rules.move(level, state, cell)
+				if state.key and state.mask != 7: valid_order = false
+			check(not path.is_empty() and game.rules.won(level, state) and valid_order, "hard solvable and ordered size %d sample %d" % [n, sample])
+	check(game.timer_label.text == "00:00", "timer has no prefix")
 	game.saves = original
 	game._save()
 	game.queue_free()

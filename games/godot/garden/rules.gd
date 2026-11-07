@@ -24,7 +24,7 @@ func neighbors(p: int, n: int) -> Array:
 	if p < n * (n - 1): result.append(p + n)
 	return result
 
-func generate(n: int, value: String) -> Dictionary:
+func generate(n: int, value: String, hard: bool = false) -> Dictionary:
 	assert(n >= 5 and n <= 14)
 	rng_seed(value)
 	var edges: Array = []
@@ -71,8 +71,8 @@ func generate(n: int, value: String) -> Dictionary:
 			break
 	var items: Array = []
 	for p in pool:
-		if p != key_cell and items.size() < 3: items.append(p)
-	return {"size": n, "seed": value, "edges": edges, "items": items, "key": key_cell, "home": n * n - 1}
+		if p != key_cell and items.size() < 3 and (not hard or accessible.has(p)): items.append(p)
+	return {"size": n, "seed": value, "hard": hard, "edges": edges, "items": items, "key": key_cell, "home": n * n - 1}
 
 func initial() -> Dictionary:
 	return {"pos": 0, "mask": 0, "key": false, "moves": 0}
@@ -81,7 +81,7 @@ func move(level: Dictionary, state: Dictionary, to: int) -> Dictionary:
 	if not level.edges[state.pos].has(to): return {}
 	if to == level.home and not state.key: return {}
 	var i: int = level.items.find(to)
-	return {"pos": to, "mask": state.mask | ((1 << i) if i >= 0 else 0), "key": state.key or to == level.key, "moves": state.moves + 1}
+	return {"pos": to, "mask": state.mask | ((1 << i) if i >= 0 else 0), "key": state.key or (to == level.key and (not level.get("hard", false) or state.mask == 7)), "moves": state.moves + 1}
 
 func won(level: Dictionary, state: Dictionary) -> bool:
 	return state.pos == level.home and state.mask == 7 and state.key
