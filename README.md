@@ -133,3 +133,7 @@ The current target is [GAME_DESIGN_DEVELOPMENT_V3.md](GAME_DESIGN_DEVELOPMENT_V3
 - Port the V3 rules and adventure presentation to Godot as a separate workstream. Importing the current Godot project does not enable the browser’s V3 mechanics.
 
 Retained/ordered items, keys and levers are implemented in the shared rules but are not part of the opening browser chapter. Portals remain deferred. Claude-powered hints and dialogue are not integrated, and no Claude API key is required to play.
+
+## Art and marketing assets
+
+The [Replicate asset drop](assets/replicate/README.md) contains 12 game PNGs and 4 marketing PNGs imported from the team’s Drive folder. Originals are organized under `assets/replicate/game/` and `assets/replicate/marketing/`, with source links and checksums in the manifest. These files are available for integration; they are not yet wired into any game renderer.
