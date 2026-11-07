@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+.DS_Store
+coverage/
+games/godot/.godot/
+*.log
+games/godot-preview.png

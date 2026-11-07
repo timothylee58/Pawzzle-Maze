@@ -1,0 +1,5 @@
+node_modules
+dist
+games
+GAME_DESIGN_DEVELOPMENT.md
+package-lock.json

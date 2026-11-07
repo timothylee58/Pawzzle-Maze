@@ -1,0 +1,17 @@
+{
+  "name": "@pawzzle/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=.env src/index.js",
+    "start": "node --env-file-if-exists=.env src/index.js",
+    "test": "node --test src/*.test.js"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/static": "^10.1.10",
+    "@pawzzle/game-core": "0.1.0",
+    "fastify": "^5.6.2"
+  }
+}
