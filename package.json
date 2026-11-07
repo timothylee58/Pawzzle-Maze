@@ -17,9 +17,11 @@
     "start": "npm run start -w @pawzzle/api",
     "check": "npm test && npm run build",
     "format": "prettier --write \"apps/**/src/**/*.js\" \"apps/web/*.html\" \"apps/web/src/*.css\" \"packages/**/*.js\" \"**/package.json\" README.md",
-    "format:check": "prettier --check \"apps/**/src/**/*.js\" \"apps/web/*.html\" \"apps/web/src/*.css\" \"packages/**/*.js\" \"**/package.json\" README.md"
+    "format:check": "prettier --check \"apps/**/src/**/*.js\" \"apps/web/*.html\" \"apps/web/src/*.css\" \"packages/**/*.js\" \"**/package.json\" README.md",
+    "test:browser": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "concurrently": "^9.2.1",
     "prettier": "^3.9.10"
   }

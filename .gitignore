@@ -12,3 +12,6 @@ coverage/
 games/godot/.godot/
 *.log
 games/godot-preview.png
+
+playwright-report/
+test-results/
