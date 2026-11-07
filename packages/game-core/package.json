@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": "./core.js",
+  "exports": {
+    ".": "./core.js",
+    "./v3": "./v3/index.js"
+  },
   "scripts": {
-    "test": "node --test core.test.js"
+    "test": "node --test core.test.js v3/*.test.js"
   }
 }
