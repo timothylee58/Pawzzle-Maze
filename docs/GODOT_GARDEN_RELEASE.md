@@ -93,3 +93,8 @@ warning; the browser game renders and runs correctly.
 
 Updated GamePix build: 3LmXi8UmuUqJ2cLMFcszAtkLdRI. Resubmission confirmed.
 
+
+Mobile/layout build 3LmcphowGN4CUB1eCEtV0lygONI was processed and resubmitted
+to the same jam entry. GamePix mobile-friendly flag and player instructions
+were updated for drag controls and sizes 5-14.
+
