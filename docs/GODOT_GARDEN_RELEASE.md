@@ -75,3 +75,6 @@ bones and the key checks and highlights their matching rows. All 47 existing
 integration assertions pass. Godot's headless teardown reports a resource-in-use
 warning; the browser game renders and runs correctly.
 
+
+Updated GamePix build: 3LmXi8UmuUqJ2cLMFcszAtkLdRI. Resubmission confirmed.
+
