@@ -86,6 +86,16 @@ func _draw() -> void:
 			draw_rect(wall, Color("#629b37"))
 			_draw_hedge(wall)
 
+	# Enclose every maze with the same bushes used for its interior walls.
+	for wall in [
+		Rect2(board_rect.position - Vector2(0, 4), Vector2(board_rect.size.x, 8)),
+		Rect2(Vector2(board_rect.position.x, board_rect.end.y - 4), Vector2(board_rect.size.x, 8)),
+		Rect2(board_rect.position - Vector2(4, 0), Vector2(8, board_rect.size.y)),
+		Rect2(Vector2(board_rect.end.x - 4, board_rect.position.y), Vector2(8, board_rect.size.y))
+	]:
+		draw_rect(wall, Color("#629b37"))
+		_draw_hedge(wall)
+
 func _draw_hedge(rect: Rect2) -> void:
 	var vertical := rect.size.y > rect.size.x
 	var length: float = rect.size.y if vertical else rect.size.x

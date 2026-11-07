@@ -179,3 +179,16 @@ Final fit-screen build: 3Lmnnedz4yWPw96t7BHSUA5MS3t (12,881,091 bytes).
 GamePix confirmed resubmission on 8 November 2026. The public jam page is
 available again. Mobile refinement aligns the board directly below arrows
 and uses compact checklist padding with readable text.
+
+## Bush perimeter and control clarity
+
+- Every maze and the tutorial now has a continuous wall-bush perimeter.
+- Movement arrows use larger minimalist stroked icons and reduced vertical padding.
+- Timer sits directly to the right of Restart; removed Difficulty heading and
+  made the Garden size selector fit its contents.
+- All 2,254 integration checks pass. Native runtime reports no errors; desktop,
+  320x640 browser layout and tutorial perimeter visually checked.
+- Minimum-step BFS unchanged: uniform move costs and at most 3,136 states make
+  it suitable here. A* is possible with an admissible objective-aware heuristic;
+  Kruskal alone solves a spanning-tree problem, not the required shortest route.
+- GamePix build: 3LmphiOxd27mLee2HQLnOusnSSP (12,882,313-byte ZIP).

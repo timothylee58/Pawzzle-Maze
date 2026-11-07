@@ -21,7 +21,7 @@ var pause_button: Button
 var win_next: Button
 var win_restart: Button
 var header: Control
-var header_left: VBoxContainer
+var header_left: HBoxContainer
 var header_right: VBoxContainer
 var title_center: CenterContainer
 var direction_buttons: Array = []
@@ -93,7 +93,7 @@ func _arrow_icon(direction: Vector2i) -> Texture2D:
 	if direction == Vector2i.RIGHT: angle = 90
 	elif direction == Vector2i.DOWN: angle = 180
 	elif direction == Vector2i.LEFT: angle = 270
-	return _svg_icon('<path transform="rotate(%d 12 12)" d="M12 3 3 12h6v9h6v-9h6z" fill="#174f50"/>' % angle)
+	return _svg_icon('<path transform="rotate(%d 12 12)" d="M12 20V4m-7 7 7-7 7 7" fill="none" stroke="#174f50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' % angle)
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -142,15 +142,16 @@ func _ready() -> void:
 	var brand_title := label("Pawzzle Maze", 28)
 	brand_title.autowrap_mode = TextServer.AUTOWRAP_OFF
 	brand.add_child(brand_title)
-	header_left = VBoxContainer.new()
+	header_left = HBoxContainer.new()
 	header.add_child(header_left)
 	header_left.add_child(icon_button("restart", "Restart puzzle", restart))
 	header_right = VBoxContainer.new()
 	header.add_child(header_right)
 	timer_label = label("00:00", 22)
-	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	timer_label.autowrap_mode = TextServer.AUTOWRAP_OFF
-	header_right.add_child(timer_label)
+	header_left.add_child(timer_label)
 	var tools_row := HBoxContainer.new()
 	header_right.add_child(tools_row)
 	tools_row.add_child(icon_button("help", "How to play", _show_help))
@@ -201,12 +202,14 @@ func _ready() -> void:
 		control.name = "Move" + entry[0]
 		control.icon = _arrow_icon(direction)
 		control.expand_icon = true
-		control.add_theme_constant_override("icon_max_width", 20)
+		control.add_theme_constant_override("icon_max_width", 28)
 		control.add_theme_font_size_override("font_size", 14)
 		for appearance in ["normal", "hover", "pressed"]:
 			var compact := control.get_theme_stylebox(appearance).duplicate() as StyleBoxFlat
 			compact.content_margin_left = 8
 			compact.content_margin_right = 8
+			compact.content_margin_top = 8
+			compact.content_margin_bottom = 8
 			control.add_theme_stylebox_override(appearance, compact)
 		control.custom_minimum_size = Vector2(44, 44)
 		control.focus_mode = Control.FOCUS_NONE
@@ -231,6 +234,7 @@ func _ready() -> void:
 	objectives_panel.add_child(objectives)
 	setup.add_child(label("Garden size", 15))
 	size_select = OptionButton.new()
+	size_select.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	for n in range(5, 15): size_select.add_item("%d × %d" % [n, n], n)
 	size_select.selected = 1
 	size_select.custom_minimum_size.y = 44
@@ -239,7 +243,6 @@ func _ready() -> void:
 	setup.add_child(size_select)
 	size_select.item_selected.connect(func(_index): generate())
 	setup.add_child(button("New puzzle", generate, true))
-	setup.add_child(label("DIFFICULTY", 15))
 	hard_toggle = button("Hard mode: OFF", _toggle_hard, true)
 	hard_toggle.toggle_mode = true
 	hard_toggle.tooltip_text = "Toggle Hard mode and generate a new garden"
