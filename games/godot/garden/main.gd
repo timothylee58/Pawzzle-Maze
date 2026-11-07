@@ -219,6 +219,10 @@ func _ready() -> void:
 	board.cell_pressed.connect(step)
 	play_panel.add_child(board)
 	objectives_panel = panel()
+	var checklist_style := style("#fff9e9")
+	checklist_style.content_margin_left = 12
+	checklist_style.content_margin_right = 12
+	objectives_panel.add_theme_stylebox_override("panel", checklist_style)
 	objectives_panel.custom_minimum_size.x = 0
 	objectives_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	sidebar.add_child(objectives_panel)
@@ -246,26 +250,26 @@ func _ready() -> void:
 	unchecked_icon = _svg_icon('<rect x="2" y="2" width="20" height="20" rx="5" fill="#fff9e9" stroke="#8ca89c" stroke-width="2"/>')
 	for entry in [["bone", "0/3 bones collected"], ["key", "Key collected"], ["dog_house", "Return home"]]:
 		var row := PanelContainer.new()
-		row.add_theme_stylebox_override("panel", style("#f1e6cc", 12))
+		row.add_theme_stylebox_override("panel", _objective_style(false))
 		objectives.add_child(row)
 		objective_rows.append(row)
 		var items := HBoxContainer.new()
-		items.add_theme_constant_override("separation", 8)
+		items.add_theme_constant_override("separation", 6)
 		row.add_child(items)
 		var check := TextureRect.new()
 		check.texture = unchecked_icon
-		check.custom_minimum_size = Vector2(22, 22)
+		check.custom_minimum_size = Vector2(18, 18)
 		check.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		check.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		items.add_child(check)
 		objective_checks.append(check)
 		var sprite := TextureRect.new()
 		sprite.texture = load("res://Sprites/textures/" + entry[0] + ".png")
-		sprite.custom_minimum_size = Vector2(38, 38)
+		sprite.custom_minimum_size = Vector2(28, 28)
 		sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		items.add_child(sprite)
-		var caption := label(entry[1], 15)
+		var caption := label(entry[1], 14)
 		caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		items.add_child(caption)
 		objective_labels.append(caption)
@@ -443,7 +447,7 @@ func refresh() -> void:
 	for i in 3:
 		var complete: bool = bones == 3 if i == 0 else bool(state.key) if i == 1 else rules.won(level, state)
 		objective_checks[i].texture = checked_icon if complete else unchecked_icon
-		objective_rows[i].add_theme_stylebox_override("panel", style("#dcefdc" if complete else "#f1e6cc", 12))
+		objective_rows[i].add_theme_stylebox_override("panel", _objective_style(complete))
 		objective_rows[i].tooltip_text = "Completed" if complete else "Still to collect" if i < 2 else "Collect the bones and key, then reach home"
 	board.show_board(level, state, history, -1)
 
@@ -516,3 +520,11 @@ func _control_icon(kind: String) -> Texture2D:
 	}
 	return _svg_icon(paths[kind])
 
+
+func _objective_style(complete: bool) -> StyleBoxFlat:
+	var box := style("#dcefdc" if complete else "#f1e6cc", 12)
+	box.content_margin_left = 8
+	box.content_margin_right = 8
+	box.content_margin_top = 10
+	box.content_margin_bottom = 10
+	return box

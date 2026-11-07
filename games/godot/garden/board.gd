@@ -164,6 +164,6 @@ func _input(event: InputEvent) -> void:
 func _update_geometry() -> void:
 	if level.is_empty(): return
 	var side := maxf(1, minf(size.x, size.y) - 28)
-	board_rect = Rect2((size - Vector2.ONE * side) / 2, Vector2.ONE * side)
+	board_rect = Rect2(Vector2((size.x - side) / 2, 14), Vector2.ONE * side)
 	cell_size = side / level.size
 	queue_redraw()
