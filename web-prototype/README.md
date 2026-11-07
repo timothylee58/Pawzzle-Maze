@@ -51,3 +51,13 @@ The default PAW-1024 puzzle (6×6, three items, key and delivery enabled, unorde
 Implemented: procedural loops, collectibles, optional ordering, persistent key gate, delivery gate, route planning and replay, local completion history, best scores, and timed play. Generation uses a deliberately simple two-cell exit corridor to keep gates unavoidable. It is not an arbitrary mission-dependency generator.
 
 Not implemented: levers, portals, online rankings, cloud saves, GamePix SDK integration, or a Godot runtime. No V3 completion claim is implied. The original private Site remains independently hosted; updating this folder does not automatically update it.
+
+## GitHub Pages deployment
+
+The workflow [maze-pages.yml](../.github/workflows/maze-pages.yml) tests and builds this folder, uploads only `dist/`, and deploys it to GitHub Pages on relevant pushes to `main`. It can also be run manually.
+
+One-time repository-owner setup: open **Settings → Pages → Build and deployment → Source**, choose **GitHub Actions**, then run or rerun **Deploy maze prototype to GitHub Pages** in the Actions tab. The connected contributor account could upload the workflow but could not enable Pages during setup.
+
+Expected address after a successful deployment: https://timothylee58.github.io/Pawzzle-Maze/
+
+Assets and the home link use relative paths to support the repository subdirectory. Pages is a public static deployment; it has no ChatGPT sign-in and no server-ranked scoring. Browser saves are separate from the private Site and localhost.

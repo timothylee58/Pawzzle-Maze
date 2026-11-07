@@ -56,7 +56,7 @@ export default function Page(){
  const n=level.n,unit=60,pos=(c:number)=>({x:(c%n)*unit+30,y:Math.floor(c/n)*unit+30});
  const player=pos(displayState.cell);
  return <div className="app-shell">
- <header className="topbar"><a className="brand" href="/" aria-label="Maze Lab home"><span className="brand-icon"><Layers3 size={21}/></span><strong>pawzzle<span> / maze lab</span></strong></a><div className="top-actions"><span className="prototype">FUNCTIONAL PROTOTYPE</span><button className="text-button" onClick={()=>setHelp(true)}><CircleHelp size={17}/> How to play</button></div></header>
+ <header className="topbar"><a className="brand" href="./" aria-label="Maze Lab home"><span className="brand-icon"><Layers3 size={21}/></span><strong>pawzzle<span> / maze lab</span></strong></a><div className="top-actions"><span className="prototype">FUNCTIONAL PROTOTYPE</span><button className="text-button" onClick={()=>setHelp(true)}><CircleHelp size={17}/> How to play</button></div></header>
  <main><div className="intro"><div><p className="eyebrow">BUILD A MAZE. FIND YOUR WAY.</p><h1>A little planning goes a long way.</h1><p>Generate a puzzle, collect what matters, and plan the fewest moves home.</p></div><span className="save-status"><span className={saveOk?"dot":"dot warning"}/>{saveOk?"Progress saved on this device":"Local saving unavailable"}</span></div>
  <div className="workspace">
  <aside className="settings-panel"><div className="panel-title"><h2>Puzzle setup</h2><span>01</span></div>

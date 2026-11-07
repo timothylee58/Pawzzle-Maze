@@ -1,0 +1,53 @@
+name: Deploy maze prototype to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web-prototype/**'
+      - '.github/workflows/maze-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: maze-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web-prototype
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web-prototype/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Upload static website
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: web-prototype/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Publish prototype
+        id: deployment
+        uses: actions/deploy-pages@v4
