@@ -213,3 +213,4 @@ and uses compact checklist padding with readable text.
   12 steps, matching its displayed minimum and showing Perfect route.
 - Export archive: 12,882,965 bytes. Evidence: garden-bfs-success.jpg.
 - GamePix release build: 3LmrHMZwlr2Wz34YGvAwcAPmKBL.
+- Public jam player verified serving this build with Minimum steps visible.
