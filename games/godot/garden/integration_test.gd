@@ -10,11 +10,12 @@ func _initialize() -> void:
 	call_deferred("run")
 func run() -> void:
 	var game = load("res://garden/main.tscn").instantiate()
+	root.size = Vector2i(1280, 900)
 	root.add_child(game)
 	await process_frame
 	var original: Dictionary = game.saves.duplicate(true)
 	game.saves = {"bests": {}, "muted": false}
-	game.level = game.rules.generate(6, "PAW-1024")
+	game.level = game.rules.generate_legacy(6, "PAW-1024")
 	game.optimal = game.rules.solve(game.level).size()
 	game.restart()
 	var initial: Dictionary = game.state.duplicate()
@@ -55,6 +56,18 @@ func run() -> void:
 	game.saves = {"bests": {}, "muted": false}
 	game._load_save()
 	check(game.saves.bests[game.best_key()] == route.size(), "reload best")
+
+	await click_button(game.win_restart)
+	check(not game.overlay.visible and game.state.pos == 0 and not game.board.locked, "real click: Play again resets and unlocks")
+	for to in route: game.step(to)
+	await click_button(game.win_next)
+	check(not game.overlay.visible and game.level.seed != original_seed and not game.board.locked, "real click: Another adventure generates and unlocks")
+	game.hard_toggle.button_pressed = true
+	game._toggle_hard()
+	check(game.level.hard and game.hard_toggle.text == "Hard mode: ON", "visible hard toggle generates hard puzzle")
+	game.hard_toggle.button_pressed = false
+	game._toggle_hard()
+	game.level = game.rules.generate_legacy(6, "PAW-1024")
 	game.restart()
 	var board = game.board
 	board.board_rect = Rect2(0, 0, 600, 600)
@@ -117,10 +130,53 @@ func run() -> void:
 				state = game.rules.move(level, state, cell)
 				if state.key and state.mask != 7: valid_order = false
 			check(not path.is_empty() and game.rules.won(level, state) and valid_order, "hard solvable and ordered size %d sample %d" % [n, sample])
+
 	check(game.timer_label.text == "00:00", "timer has no prefix")
+	for n in range(5, 15):
+		for sample in 100:
+			for hard in [false, true]:
+				var puzzle: Dictionary = game.rules.generate(n, "verified-%d-%d" % [n, sample], hard)
+				var seen := {0: true}
+				var current: Dictionary = game.rules.initial()
+				var valid := true
+				for cell in puzzle.route:
+					if seen.has(cell) or (cell == puzzle.key and current.mask != 7): valid = false
+					seen[cell] = true
+					current = game.rules.move(puzzle, current, cell)
+					if current.is_empty():
+						valid = false
+						break
+				check(valid and game.rules.won(puzzle, current), "no-backtrack route size %d sample %d hard %s" % [n, sample, hard])
+	var verified: Dictionary = game.rules.generate(6, "negative-validation", true)
+	check(not game.rules.validate_route(verified, []), "reject incomplete route")
+	check(not game.rules.validate_route(verified, [verified.route[0], 0] + verified.route), "reject backtracking")
+	var swapped: Dictionary = verified.duplicate(true)
+	swapped.key = verified.items[0]
+	swapped.items[0] = verified.key
+	check(not game.rules.validate_route(swapped, verified.route), "reject key before all bones")
+	await click_button(game.pause_button)
+	check(paused and game.board.blur_layer.visible and game.pause_button.tooltip_text == "Resume", "pause icon toggles to play")
+	await click_button(game.pause_button)
+	check(not paused and not game.board.blur_layer.visible and game.pause_button.tooltip_text == "Pause", "play icon resumes")
+
 	game.saves = original
 	game._save()
 	game.queue_free()
 	await create_timer(0.1).timeout
 	print("Garden integration: %d checks; %d failures." % [checks, failures])
 	quit(1 if failures else 0)
+
+func click_button(control: Button) -> void:
+	await process_frame
+	await process_frame
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.position = control.get_global_rect().get_center()
+	click.global_position = click.position
+	click.pressed = true
+	root.push_input(click, true)
+	await process_frame
+	click = click.duplicate()
+	click.pressed = false
+	root.push_input(click, true)
+	await process_frame

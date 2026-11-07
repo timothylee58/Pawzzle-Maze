@@ -122,3 +122,28 @@ Evidence: garden-paused-blur.jpg and garden-tutorial.jpg.
 GamePix build 3LmgamJYNBc8c9GlhQMzXSEhmAb processed successfully and was
 resubmitted to the existing AE5L7D jam entry on 7 November 2026.
 The 390x844 browser iframe also renders the complete 1x10 tutorial correctly.
+
+## Verified gardens and compact controls
+
+- Fixed completion popup input: the board is locked while the win overlay is
+  visible, so it cannot consume clicks intended for either completion button.
+  Invisible boards also ignore input. Both buttons are exercised with real
+  mouse events in integration tests and completed web playthroughs.
+- New generation places three bones followed by the key on a simple path from
+  Mocha to home. A validator replays legal moves, checks bone-before-key order,
+  rejects repeated cells, and requires completion before accepting the puzzle.
+  Invalid candidates are retried; the legacy generator remains only as a
+  graph source and parity-test reference. Backtracking by the player is still
+  allowed; every accepted puzzle has a route that requires none.
+- Sidebars now shrink to content height. Hard mode is a visible ON/OFF toggle.
+- Restart, help, sound and pause use drawn SVG icons. Pause toggles to play;
+  the board blurs without covering the toolbar, so the same button resumes.
+- 2,213 integration checks pass, including 2,000 independently replayed routes
+  across all ten sizes and both modes, invalid-route rejection, actual popup
+  clicks and pause/resume clicks. 18,100 legacy parity checks also pass.
+- Godot MCP native runtime reported no errors. Final headless integration run
+  completed without resource warnings. Web playthrough verified both popup
+  buttons; physical mobile/Safari remain untested.
+
+Release build: 3LmjSHCv1KSkiFlfoUCH4kMb0im (12,880,572-byte ZIP).
+Web evidence: garden-compact-controls.jpg.

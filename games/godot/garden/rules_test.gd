@@ -12,7 +12,7 @@ func _initialize() -> void:
 	var fixtures = JSON.parse_string(FileAccess.get_file_as_string("res://garden/parity.json"))
 	for fixture in fixtures:
 		var expected: Dictionary = fixture.level
-		var level: Dictionary = rules.generate(int(expected.size), expected.seed)
+		var level: Dictionary = rules.generate_legacy(int(expected.size), expected.seed)
 		check(JSON.parse_string(JSON.stringify(level.edges)) == expected.edges, "edges " + expected.seed)
 		check(JSON.parse_string(JSON.stringify(level.items)) == expected.items and level.key == expected.key, "objects " + expected.seed)
 		var solution: Array = rules.solve(level)

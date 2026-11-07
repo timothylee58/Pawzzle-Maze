@@ -133,7 +133,7 @@ func _drag_to(point: Vector2) -> void:
 	drag_position = point
 
 func _input(event: InputEvent) -> void:
-	if locked or level.is_empty() or get_tree().paused:
+	if locked or not is_visible_in_tree() or level.is_empty() or get_tree().paused:
 		cancel_drag()
 		return
 	var transform := get_global_transform_with_canvas().affine_inverse()

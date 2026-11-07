@@ -12,7 +12,10 @@ var saves: Dictionary = {"bests": {}, "muted": false}
 var board: Control
 var size_select: OptionButton
 var setup_panel: PanelContainer
-var mode_select: OptionButton
+var hard_toggle: Button
+var pause_button: Button
+var win_next: Button
+var win_restart: Button
 var header: Control
 var header_left: VBoxContainer
 var header_right: VBoxContainer
@@ -134,17 +137,21 @@ func _ready() -> void:
 	brand.add_child(brand_title)
 	header_left = VBoxContainer.new()
 	header.add_child(header_left)
-	header_left.add_child(button("Restart", restart))
+	header_left.add_child(icon_button("restart", "Restart puzzle", restart))
 	header_right = VBoxContainer.new()
 	header.add_child(header_right)
 	timer_label = label("00:00", 22)
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	timer_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	header_right.add_child(timer_label)
-	header_right.add_child(button("How to play", _show_help))
-	sound = button("Sound off" if saves.muted else "Sound on", _toggle_sound)
-	header_right.add_child(sound)
-	header_right.add_child(button("Pause", func(): get_node("/root/GPX").set_pause_reason("manual", true)))
+	var tools_row := HBoxContainer.new()
+	header_right.add_child(tools_row)
+	tools_row.add_child(icon_button("help", "How to play", _show_help))
+	sound = icon_button("muted" if saves.muted else "sound", "Turn sound on" if saves.muted else "Mute sound", _toggle_sound)
+	tools_row.add_child(sound)
+	pause_button = icon_button("pause", "Pause", _toggle_pause)
+	pause_button.process_mode = Node.PROCESS_MODE_ALWAYS
+	tools_row.add_child(pause_button)
 	header.resized.connect(_layout_header)
 	header_right.resized.connect(_layout_header)
 	layout = BoxContainer.new()
@@ -152,6 +159,7 @@ func _ready() -> void:
 	page.add_child(layout)
 	setup_panel = panel()
 	setup_panel.custom_minimum_size.x = 190
+	setup_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	layout.add_child(setup_panel)
 	var setup := VBoxContainer.new()
 	setup.add_theme_constant_override("separation", 14)
@@ -200,6 +208,7 @@ func _ready() -> void:
 	play_panel.add_child(movement_help)
 	objectives_panel = panel()
 	objectives_panel.custom_minimum_size.x = 230
+	objectives_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	layout.add_child(objectives_panel)
 	var objectives := VBoxContainer.new()
 	objectives.add_theme_constant_override("separation", 18)
@@ -214,15 +223,11 @@ func _ready() -> void:
 	setup.add_child(size_select)
 	size_select.item_selected.connect(func(_index): generate())
 	setup.add_child(button("New puzzle", generate, true))
-	setup.add_child(label("Mode", 15))
-	mode_select = OptionButton.new()
-	mode_select.add_item("Normal", 0)
-	mode_select.add_item("Hard", 1)
-	mode_select.custom_minimum_size.y = 44
-	mode_select.add_theme_stylebox_override("normal", style("#f1e6cc", 10))
-	mode_select.add_theme_color_override("font_color", Color("#174f50"))
-	setup.add_child(mode_select)
-	mode_select.item_selected.connect(func(_index): generate())
+	setup.add_child(label("DIFFICULTY", 15))
+	hard_toggle = button("Hard mode: OFF", _toggle_hard, true)
+	hard_toggle.toggle_mode = true
+	hard_toggle.tooltip_text = "Toggle Hard mode and generate a new garden"
+	setup.add_child(hard_toggle)
 	setup.add_child(label("Hard mode: collect all bones before picking up the key.", 14))
 	objectives.add_child(label("YOUR CHECKLIST", 17))
 	checked_icon = _svg_icon('<rect x="2" y="2" width="20" height="20" rx="5" fill="#229c7a"/><path d="m6 12 4 4 8-9" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>')
@@ -259,8 +264,12 @@ func _ready() -> void:
 	win_box.add_child(label("A royal success.", 30))
 	result = label("", 20)
 	win_box.add_child(result)
-	win_box.add_child(button("Another adventure", next_puzzle, true))
-	win_box.add_child(button("Play again", restart))
+	win_next = button("Another adventure", next_puzzle, true)
+	win_next.name = "AnotherAdventure"
+	win_box.add_child(win_next)
+	win_restart = button("Play again", restart)
+	win_restart.name = "PlayAgain"
+	win_box.add_child(win_restart)
 	pause_cover = _make_overlay()
 	pause_cover.add_theme_stylebox_override("panel", style("#174f5066", 0))
 	pause_cover.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -339,7 +348,7 @@ func _resize() -> void:
 
 func generate() -> void:
 	var seed_value := str(Time.get_ticks_usec()) + "-" + str(randi())
-	level = rules.generate(size_select.get_selected_id(), seed_value, mode_select.selected == 1)
+	level = rules.generate(size_select.get_selected_id(), seed_value, hard_toggle.button_pressed)
 	optimal = rules.solve(level).size()
 	restart()
 
@@ -422,6 +431,7 @@ func best_key() -> String:
 	return ("hard:" if level.get("hard", false) else "normal:") + str(level.size) + ":" + level.seed
 
 func refresh() -> void:
+	board.locked = get_tree().paused or overlay.visible or help_cover.visible
 	for i in 5:
 		var complete: bool = bool(state.mask & (1 << i)) if i < 3 else bool(state.key) if i == 3 else rules.won(level, state)
 		objective_checks[i].texture = checked_icon if complete else unchecked_icon
@@ -433,14 +443,17 @@ func _toggle_sound() -> void:
 	begin()
 	saves.muted = not bool(saves.muted)
 	AudioServer.set_bus_mute(0, saves.muted)
-	sound.text = "Sound off" if saves.muted else "Sound on"
+	sound.icon = _control_icon("muted" if saves.muted else "sound")
+	sound.tooltip_text = "Turn sound on" if saves.muted else "Mute sound"
 	_save()
 
 func _paused(value: bool) -> void:
-	pause_cover.visible = value and not help_cover.visible
-	board.locked = value
+	pause_cover.visible = value and not help_cover.visible and not get_node("/root/GPX").pause_reasons.has("manual")
+	board.locked = value or overlay.visible or help_cover.visible
+	pause_button.icon = _control_icon("play" if value else "pause")
+	pause_button.tooltip_text = "Resume" if value else "Pause"
 	board.set_blurred(value)
-	for control in direction_buttons: control.disabled = value
+	for control in direction_buttons: control.disabled = value or overlay.visible
 	if value: board.cancel_drag()
 	if music != null: music.stream_paused = value
 
@@ -463,7 +476,33 @@ func _save() -> void:
 func _layout_header() -> void:
 	if header == null or header_right == null: return
 	var compact := size.x < 600
-	header.custom_minimum_size.y = 270 if compact else 220
+	header.custom_minimum_size.y = 135 if compact else 90
 	header_left.position = Vector2(0, 50 if compact else 0)
 	header_right.position = Vector2(maxf(0, header.size.x - header_right.size.x), 50 if compact else 0)
 
+func _toggle_hard() -> void:
+	hard_toggle.text = "Hard mode: ON" if hard_toggle.button_pressed else "Hard mode: OFF"
+	generate()
+
+func _toggle_pause() -> void:
+	var gpx = get_node("/root/GPX")
+	gpx.set_pause_reason("manual", not gpx.pause_reasons.has("manual"))
+
+func icon_button(kind: String, description: String, action: Callable) -> Button:
+	var control := button("", action)
+	control.icon = _control_icon(kind)
+	control.tooltip_text = description
+	control.custom_minimum_size = Vector2(48, 48)
+	control.focus_mode = Control.FOCUS_NONE
+	return control
+
+func _control_icon(kind: String) -> Texture2D:
+	var paths := {
+		"pause": '<path d="M8 5v14M16 5v14" stroke="#174f50" stroke-width="4"/>',
+		"play": '<path d="m7 4 14 8-14 8z" fill="#174f50"/>',
+		"help": '<path d="M8 8a4 4 0 1 1 6 3.5c-2 1-2 2-2 3" fill="none" stroke="#174f50" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="19" r="1.4" fill="#174f50"/>',
+		"restart": '<path d="M5 8a8 8 0 1 1-1 7M5 3v6h6" fill="none" stroke="#174f50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',
+		"sound": '<path d="M3 9h4l5-4v14l-5-4H3z" fill="#174f50"/><path d="M16 8q4 4 0 8M19 5q7 7 0 14" fill="none" stroke="#174f50" stroke-width="2" stroke-linecap="round"/>',
+		"muted": '<path d="M3 9h4l5-4v14l-5-4H3z" fill="#174f50"/><path d="m16 9 6 6m0-6-6 6" stroke="#174f50" stroke-width="2" stroke-linecap="round"/>'
+	}
+	return _svg_icon(paths[kind])

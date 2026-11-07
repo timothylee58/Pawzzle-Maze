@@ -24,7 +24,7 @@ func neighbors(p: int, n: int) -> Array:
 	if p < n * (n - 1): result.append(p + n)
 	return result
 
-func generate(n: int, value: String, hard: bool = false) -> Dictionary:
+func generate_legacy(n: int, value: String, hard: bool = false) -> Dictionary:
 	assert(n >= 5 and n <= 14)
 	rng_seed(value)
 	var edges: Array = []
@@ -111,3 +111,52 @@ func solve(level: Dictionary, start: Dictionary = {}) -> Array:
 				nodes.append({"state": next, "prev": at})
 		at += 1
 	return []
+
+# Place objectives on a simple route, and replay it before accepting the maze.
+func generate(n: int, value: String, hard: bool = false) -> Dictionary:
+	for attempt in 32:
+		var candidate := generate_legacy(n, value + ("-retry-%d" % attempt if attempt else ""), hard)
+		var parents := {0: -1}
+		var queue: Array = [0]
+		var at := 0
+		while at < queue.size() and not parents.has(candidate.home):
+			var p: int = queue[at]
+			at += 1
+			for q in candidate.edges[p]:
+				if not parents.has(q):
+					parents[q] = p
+					queue.append(q)
+		if not parents.has(candidate.home): continue
+		var route: Array = []
+		var cursor: int = candidate.home
+		while cursor != 0:
+			route.push_front(cursor)
+			cursor = parents[cursor]
+		if route.size() < 5: continue
+		var slots: Array = range(route.size() - 1)
+		for i in range(slots.size() - 1, 0, -1):
+			var j := int(rand_value() * (i + 1))
+			var temp = slots[i]
+			slots[i] = slots[j]
+			slots[j] = temp
+		slots = slots.slice(0, 4)
+		slots.sort()
+		candidate.items = [route[slots[0]], route[slots[1]], route[slots[2]]]
+		candidate.key = route[slots[3]]
+		candidate.route = route
+		if validate_route(candidate, route): return candidate
+	push_error("Could not generate a verified garden")
+	return {}
+
+func validate_route(level: Dictionary, route: Array) -> bool:
+	var visited := {0: true}
+	var current := initial()
+	var strict := level.duplicate()
+	strict.hard = true
+	for cell in route:
+		if visited.has(cell): return false
+		visited[cell] = true
+		if cell == level.key and current.mask != 7: return false
+		current = move(strict, current, cell)
+		if current.is_empty(): return false
+	return won(strict, current)
