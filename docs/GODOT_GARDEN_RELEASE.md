@@ -433,3 +433,7 @@ Work during roughly 21:00 on 7 November through noon on 8 November:
   expectations only; physical mobile/Safari/ad playback remain untested.
 - Pushed implementation, release ZIP, evidence and audit to codex/godot-garden.
   PR #6 is OPEN against main; no merge has been performed.
+
+Follow-up at noon: GamePix automatically acknowledged receipt of the retry and
+created support ticket 10135861. Delivery is now confirmed by the recipient's
+automated response; a human response and public-description fix remain pending.
