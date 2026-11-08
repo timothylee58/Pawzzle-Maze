@@ -261,7 +261,7 @@ func _ready() -> void:
 	size_row.add_child(size_caption)
 	size_select = OptionButton.new()
 	size_select.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	for n in range(5, 15): size_select.add_item("%d × %d" % [n, n], n)
+	for n in range(5, 11): size_select.add_item("%d × %d" % [n, n], n)
 	size_select.add_theme_font_size_override("font_size", 17)
 	size_select.get_popup().add_theme_font_size_override("font_size", 17)
 	size_select.alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -367,7 +367,7 @@ func _ready() -> void:
 		tutorial_controls.add_child(arrow)
 		tutorial_buttons.append(arrow)
 	tutorial_controls.add_child(icon_button("restart", "Restart tutorial", _reset_tutorial))
-	_add_help_section(help_box, "Your goal", "Collect three bones on 5×5–8×8 gardens, or five bones on 9×9–14×14 gardens. Pick up the key and return to the doghouse. Every puzzle has a verified route without backtracking. Practise on the strip by clicking an adjacent tile or using the arrows.")
+	_add_help_section(help_box, "Your goal", "Collect three bones on 5×5–8×8 gardens, or five bones on 9×9–10×10 gardens. Pick up the key and return to the doghouse. Every puzzle has a verified route without backtracking. Practise on the strip by clicking an adjacent tile or using the arrows.")
 	for index in MODE_NAMES.size():
 		_add_help_section(help_box, MODE_NAMES[index] + " mode", MODE_DESCRIPTIONS[index])
 	_add_help_section(help_box, "Created by", "Frankie — Developed and refined the web app prototype used as the reference for the Godot game.\n\nTimothy — Developed the infrastructure and maze APIs.\n\nHan — Integrated the assets into Godot and carried out penetration testing and debugging.\n\nColin — Designed the sprites and visual assets in Figma.")

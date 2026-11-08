@@ -346,3 +346,15 @@ and uses compact checklist padding with readable text.
   the sidebar label, removed prompt, and all four credit paragraphs.
 - GamePix accepted and resubmitted build 3Lo7vW4v5aVTOPKqLT7Ljmwo2oO.
 - Public player verified serving the new build. Evidence: garden-contributor-credits.jpg and garden-credits-release-live.jpg.
+
+## Garden size cap and support request
+
+- Removed 11x11 through 14x14 from the garden selector; available sizes are
+  5x5 through 10x10, with 7x7 still the default.
+- Updated the guide to describe five bones on 9x9 through 10x10.
+- Godot web export succeeded (13,124,251-byte ZIP). Browser inspection verified
+  all six size options and the 7x7 default; evidence: garden-size-options.jpg.
+- Sent the public-description correction request to support@gamepix.com on
+  8 November 2026 with current rules and Frankie, Timothy, Han and Colin credited.
+  Public-description synchronization remains pending GamePix support.
+- GamePix accepted build 3Lo9eclQK2QqKqoIj92erlt1Huw; submitted the size-cap update.
