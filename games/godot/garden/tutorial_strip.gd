@@ -1,4 +1,5 @@
 extends Control
+signal cell_pressed(cell: int)
 var textures: Dictionary = {}
 var state: Dictionary = {"pos": 0, "mask": 0, "key": false}
 var trail: Array = []
@@ -6,7 +7,7 @@ const PLACEMENT := {1: "bone", 4: "bone", 7: "bone", 10: "key", 13: "dog_house"}
 
 func _ready() -> void:
 	custom_minimum_size.y = 130
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mouse_filter = Control.MOUSE_FILTER_STOP
 	for item in ["princess_mocha", "bone", "key", "dog_house", "wall_bush"]:
 		textures[item] = load("res://Sprites/textures/" + item + ".png")
 	resized.connect(queue_redraw)
@@ -49,3 +50,17 @@ func show_state(current: Dictionary, history: Array) -> void:
 	state = current
 	trail = history
 	queue_redraw()
+
+func _gui_input(event: InputEvent) -> void:
+	var point: Vector2
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		point = event.position
+	elif event is InputEventScreenTouch and event.pressed:
+		point = event.position
+	else:
+		return
+	var cell := maxf(1, minf((size.x - 28) / 14.0, 100.0))
+	var origin := Vector2((size.x - cell * 14) / 2, (size.y - cell) / 2)
+	if Rect2(origin, Vector2(cell * 14, cell)).has_point(point):
+		cell_pressed.emit(int((point.x - origin.x) / cell))
+		accept_event()

@@ -19,9 +19,9 @@ var size_select: OptionButton
 var setup_panel: PanelContainer
 const MODE_NAMES := ["Classic", "Hard", "Brutal"]
 const MODE_DESCRIPTIONS := [
-	"Collect all three bones and the key in any order, then return home.",
-	"Collect all three bones before picking up the key, then return home. You may revisit cells.",
-	"Collect all three bones before picking up the key, then return home without revisiting any cell. Undo can take back a move."
+	"Collect all bones and the key in any order, then return home.",
+	"Collect all bones before picking up the key, then return home. You may revisit cells.",
+	"Collect all bones before picking up the key, then return home without revisiting any cell."
 ]
 var selected_mode := 0
 var mode_buttons: Array[CheckBox] = []
@@ -161,12 +161,14 @@ func _ready() -> void:
 	brand.add_child(brand_title)
 	header_right = VBoxContainer.new()
 
-	timer_label = label("(0 seconds)", 22)
+	timer_label = label("0 seconds", 22)
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	timer_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	var tools_row := HBoxContainer.new()
 	header_right.add_child(tools_row)
+	tools_row.add_child(timer_label)
+	_add_gap(tools_row, 12)
 	tools_row.add_child(icon_button("help", "How to play", _show_help))
 	sound = icon_button("muted" if saves.muted else "sound", "Turn sound on" if saves.muted else "Mute sound", _toggle_sound)
 	tools_row.add_child(sound)
@@ -217,8 +219,6 @@ func _ready() -> void:
 	toolbar = HBoxContainer.new()
 	toolbar.add_theme_constant_override("separation", 6)
 	control_row.add_child(toolbar)
-	toolbar.add_child(timer_label)
-	_add_gap(toolbar, 18)
 	directions = GridContainer.new()
 	directions.columns = 4
 	directions.add_theme_constant_override("h_separation", 6)
@@ -242,6 +242,7 @@ func _ready() -> void:
 	undo_button = icon_button("undo", "Undo last move", undo)
 	toolbar.add_child(undo_button)
 	restart_button = icon_button("restart", "Restart puzzle", restart)
+	restart_button.process_mode = Node.PROCESS_MODE_ALWAYS
 	toolbar.add_child(restart_button)
 	var toolbar_flex := Control.new()
 	toolbar_flex.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -264,7 +265,7 @@ func _ready() -> void:
 	size_select.add_theme_font_size_override("font_size", 17)
 	size_select.get_popup().add_theme_font_size_override("font_size", 17)
 	size_select.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	size_select.selected = 1
+	size_select.selected = 2
 	size_select.custom_minimum_size.y = 44
 	size_select.add_theme_stylebox_override("normal", style("#f1e6cc", 10))
 	size_select.add_theme_color_override("font_color", Color("#174f50"))
@@ -277,9 +278,9 @@ func _ready() -> void:
 	var new_puzzle := button("New puzzle", generate, true)
 	new_puzzle.add_theme_font_size_override("font_size", 19)
 	setup.add_child(new_puzzle)
-	var mode_gap := Control.new()
-	mode_gap.custom_minimum_size.y = 20
-	setup.add_child(mode_gap)
+	var divider := HSeparator.new()
+	divider.custom_minimum_size.y = 20
+	setup.add_child(divider)
 	setup.add_child(label("Difficulty mode", 20))
 	var mode_group := ButtonGroup.new()
 	for index in MODE_NAMES.size():
@@ -297,12 +298,16 @@ func _ready() -> void:
 		setup.add_child(choice)
 		mode_buttons.append(choice)
 	mode_description = label(MODE_DESCRIPTIONS[selected_mode], 18)
-	setup.add_child(mode_description)
+	var description_space := Control.new()
+	description_space.custom_minimum_size.y = 160
+	setup.add_child(description_space)
+	description_space.add_child(mode_description)
+	mode_description.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var optimum_gap := Control.new()
 	optimum_gap.custom_minimum_size.y = 20
 	setup.add_child(optimum_gap)
 	minimum_label = label("", 19)
-	minimum_label.tooltip_text = "Fewest legal tile moves from the start to collect all three bones and the key, then reach home in the selected mode."
+	minimum_label.tooltip_text = "Fewest legal tile moves from the start to collect all bones and the key, then reach home in the selected mode."
 	setup.add_child(minimum_label)
 	overlay = _make_overlay()
 	var win_box := VBoxContainer.new()
@@ -345,6 +350,7 @@ func _ready() -> void:
 	help_box.add_child(help_title)
 	tutorial = TutorialStrip.new()
 	tutorial.name = "TutorialStrip"
+	tutorial.cell_pressed.connect(_tutorial_step)
 	help_box.add_child(tutorial)
 	tutorial_status = label("", 18)
 	tutorial_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -361,12 +367,9 @@ func _ready() -> void:
 		tutorial_controls.add_child(arrow)
 		tutorial_buttons.append(arrow)
 	tutorial_controls.add_child(icon_button("restart", "Restart tutorial", _reset_tutorial))
-	_add_help_section(help_box, "Your goal", "Guide Mocha to collect all three bones and one key, then return to the doghouse. Each puzzle has a verified route without backtracking.")
+	_add_help_section(help_box, "Your goal", "Collect three bones on 5×5–8×8 gardens, or five bones on 9×9–14×14 gardens. Pick up the key and return to the doghouse. Every puzzle has a verified route without backtracking. Practise on the strip by clicking an adjacent tile or using the arrows.")
 	for index in MODE_NAMES.size():
 		_add_help_section(help_box, MODE_NAMES[index] + " mode", MODE_DESCRIPTIONS[index])
-	_add_help_section(help_box, "Moving Mocha", "Drag Mocha along open paths, tap an adjacent tile, or use the arrow buttons. On a keyboard, use the arrow keys or WASD. Hedges block movement. Paw prints show your path.")
-	_add_help_section(help_box, "Puzzle controls", "Undo takes back one move without changing the timer. Restart resets the current puzzle and timer. New puzzle generates another garden. Pause blurs the grid and stops the timer.")
-	_add_help_section(help_box, "Timing and practice", "The timer starts when a puzzle is generated and pauses while this guide is open. Use the arrows above to practise, then return to your puzzle with the back arrow.")
 	_add_help_section(help_box, "Created by", "Frankie, Timothy, Han and Colin")
 	help_cover.hide()
 	scroll.show()
@@ -410,9 +413,9 @@ func _resize() -> void:
 
 func generate() -> void:
 	var seed_value := str(Time.get_ticks_usec()) + "-" + str(randi())
-	level = rules.generate(size_select.get_selected_id(), seed_value, selected_mode > 0, selected_mode == 2)
-	optimal = rules.solve_result(level).minimum_steps
-	restart()
+	# Certify every garden for Brutal so switching modes never changes its layout.
+	level = rules.generate(size_select.get_selected_id(), seed_value, true, true)
+	_apply_mode()
 
 func _process(delta: float) -> void:
 	if timer_running and not get_tree().paused:
@@ -421,7 +424,7 @@ func _process(delta: float) -> void:
 
 func _update_timer() -> void:
 	var seconds := int(elapsed)
-	timer_label.text = "(%d seconds)" % seconds
+	timer_label.text = "%d seconds" % seconds
 
 func _show_help() -> void:
 	scroll.hide()
@@ -436,6 +439,7 @@ func _hide_help() -> void:
 	_paused(get_tree().paused)
 
 func restart() -> void:
+	get_node("/root/GPX").set_pause_reason("manual", false)
 	minimum_label.text = "Minimum steps: %d" % optimal if optimal >= 0 else "No solution"
 	state = rules.initial(level)
 	history.clear()
@@ -549,7 +553,13 @@ func _mode_changed(index: int) -> void:
 	selected_mode = index
 	mode_buttons[index].set_pressed_no_signal(true)
 	mode_description.text = MODE_DESCRIPTIONS[index]
-	generate()
+	if not level.is_empty(): _apply_mode()
+
+func _apply_mode() -> void:
+	level.hard = selected_mode > 0
+	level.brutal = selected_mode == 2
+	optimal = rules.solve_result(level).minimum_steps
+	restart()
 
 func _add_help_section(parent: VBoxContainer, heading: String, body: String) -> void:
 	var section := VBoxContainer.new()
@@ -597,7 +607,11 @@ func _reset_tutorial() -> void:
 
 func _tutorial_move(direction: Vector2i) -> void:
 	if rules.won(tutorial_level, tutorial_state) or direction.y != 0: return
-	var next: Dictionary = rules.move(tutorial_level, tutorial_state, tutorial_state.pos + direction.x)
+	_tutorial_step(tutorial_state.pos + direction.x)
+
+func _tutorial_step(cell: int) -> void:
+	if rules.won(tutorial_level, tutorial_state): return
+	var next: Dictionary = rules.move(tutorial_level, tutorial_state, cell)
 	if next.is_empty(): return
 	tutorial_history.append(tutorial_state)
 	tutorial_state = next

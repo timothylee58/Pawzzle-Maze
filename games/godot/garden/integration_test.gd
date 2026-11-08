@@ -13,6 +13,7 @@ func run() -> void:
 	root.size = Vector2i(1280, 900)
 	root.add_child(game)
 	await process_frame
+	check(game.level.size == 7 and game.size_select.get_selected_id() == 7, "default garden is 7x7")
 	var original: Dictionary = game.saves.duplicate(true)
 	game.saves = {"bests": {}, "muted": false}
 	game.level = game.rules.generate_legacy(6, "PAW-1024")
@@ -138,19 +139,20 @@ func run() -> void:
 			var valid_order := true
 			for cell in path:
 				state = game.rules.move(level, state, cell)
-				if state.key and state.mask != 7: valid_order = false
+				if state.key and state.mask != (1 << level.items.size()) - 1: valid_order = false
 			check(not path.is_empty() and game.rules.won(level, state) and valid_order, "hard solvable and ordered size %d sample %d" % [n, sample])
 
-	check(game.timer_label.text == "(0 seconds)", "timer displays elapsed seconds")
+	check(game.timer_label.text == "0 seconds", "timer displays elapsed seconds")
 	for n in range(5, 15):
 		for sample in 100:
 			for hard in [false, true]:
 				var puzzle: Dictionary = game.rules.generate(n, "verified-%d-%d" % [n, sample], hard)
+				check(puzzle.items.size() == (5 if n >= 9 else 3), "size determines bone count")
 				var seen := {0: true}
 				var current: Dictionary = game.rules.initial()
 				var valid := true
 				for cell in puzzle.route:
-					if seen.has(cell) or (cell == puzzle.key and current.mask != 7): valid = false
+					if seen.has(cell) or (cell == puzzle.key and current.mask != (1 << puzzle.items.size()) - 1): valid = false
 					seen[cell] = true
 					current = game.rules.move(puzzle, current, cell)
 					if current.is_empty():
@@ -224,13 +226,28 @@ func run() -> void:
 	for control in game.direction_buttons + [game.undo_button, game.restart_button, game.sound, game.pause_button, game.help_back]:
 		check(is_equal_approx(control.size.x, control.size.y), "icon control is circular, not elliptical")
 	check(absf(game.timer_label.get_global_rect().get_center().y - game.pause_button.get_global_rect().get_center().y) < 1, "all toolbar controls align horizontally")
-	check(game.directions.global_position.x - game.timer_label.get_global_rect().end.x >= 18, "timer group has invisible divider")
+	check(game.timer_label.global_position.x > game.restart_button.get_global_rect().end.x, "timer is on right side of grid")
 	check(game.undo_button.global_position.x - game.directions.get_global_rect().end.x >= 18, "arrows group has invisible divider")
 	check(game.size_select.alignment == HORIZONTAL_ALIGNMENT_CENTER, "dropdown text centered")
 	check(game.theme.default_font.base_font.resource_path.ends_with("Fredoka.ttf"), "Fredoka is the game theme")
 
+	game.generate()
+	await process_frame
+	await process_frame
+	var stable_level: Dictionary = game.level.duplicate(true)
+	var stable_panel: Vector2 = game.setup_panel.size
+	game.elapsed = 123.0
+	game._update_timer()
+	await click_button(game.restart_button)
+	check(game.elapsed < 1 and game.timer_label.text == "0 seconds", "real Restart click resets timer")
+	game.elapsed = 67.0
+	gpx.set_pause_reason("manual", true)
+	await click_button(game.restart_button)
+	check(not paused and game.elapsed < 1 and game.timer_label.text == "0 seconds", "Restart works while paused and resets timer")
 	for mode in 3:
 		await click_button(game.mode_buttons[mode])
+		check(game.level.edges == stable_level.edges and game.level.items == stable_level.items and game.level.key == stable_level.key and game.level.seed == stable_level.seed, "mode switch keeps exact maze and objects")
+		check(game.setup_panel.size.is_equal_approx(stable_panel), "sidebar dimensions stay fixed across modes")
 		check(game.selected_mode == mode and game.mode_buttons[mode].button_pressed, "radio click selects mode")
 		for other in 3:
 			check(game.mode_buttons[other].button_pressed == (other == mode), "exactly one difficulty selected")
@@ -241,7 +258,12 @@ func run() -> void:
 		check(paused and game.tutorial_state.pos == 0, "tutorial opens fresh and pauses main game")
 		game._tutorial_move(Vector2i.UP)
 		check(game.tutorial_state.pos == 0, "tutorial vertical arrow cannot move")
-		for i in 13:
+		await process_frame
+		await click_tutorial(game.tutorial, 1)
+		check(game.tutorial_state.pos == 1, "tutorial cell click moves dog")
+		await click_tutorial(game.tutorial, 5)
+		check(game.tutorial_state.pos == 1, "tutorial rejects non-adjacent cell click")
+		for i in 12:
 			await click_button(game.tutorial_buttons[3])
 		check(game.rules.won(game.tutorial_level, game.tutorial_state), "tutorial solved with real arrow clicks in each mode")
 		check(game.state == original_state and game.elapsed == original_elapsed, "tutorial leaves main puzzle and timer unchanged")
@@ -279,4 +301,19 @@ func click_button(control: Button) -> void:
 	click = click.duplicate()
 	click.pressed = false
 	root.push_input(click, true)
+	await process_frame
+
+func click_tutorial(strip: Control, cell_index: int) -> void:
+	var side := maxf(1, minf((strip.size.x - 28) / 14.0, 100.0))
+	var point := strip.global_position + Vector2((strip.size.x - side * 14) / 2 + side * (cell_index + 0.5), strip.size.y / 2)
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.position = point
+	event.global_position = point
+	event.pressed = true
+	root.push_input(event, true)
+	await process_frame
+	event = event.duplicate()
+	event.pressed = false
+	root.push_input(event, true)
 	await process_frame

@@ -12,14 +12,14 @@ func check(ok: bool, message: String) -> void:
 
 # Independent enumeration on small boards; no production transitions/search.
 func oracle(level: Dictionary, pos: int = 0, mask: int = 0, key: bool = false, visited: Array = [0]) -> int:
-	if pos == level.home and mask == 7 and key: return 0
+	if pos == level.home and mask == (1 << level.items.size()) - 1 and key: return 0
 	var best := 99999
 	for next in level.edges[pos]:
 		if visited.has(next) or (next == level.home and not key): continue
 		var next_mask := mask
-		for i in 3:
+		for i in level.items.size():
 			if next == level.items[i]: next_mask |= 1 << i
-		var next_key: bool = key or (next == level.key and mask == 7)
+		var next_key: bool = key or (next == level.key and mask == (1 << level.items.size()) - 1)
 		var distance := oracle(level, next, next_mask, next_key, visited + [next])
 		if distance >= 0: best = mini(best, distance + 1)
 	return -1 if best == 99999 else best

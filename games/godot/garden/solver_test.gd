@@ -31,14 +31,14 @@ func oracle(level: Dictionary, start: Dictionary) -> int:
 			if distances[candidate] < distances[best]: best = candidate
 		pending.erase(best)
 		var cost: int = distances[best]
-		if best.x == level.home and best.y == 7 and best.z == 1: return cost
+		if best.x == level.home and best.y == (1 << level.items.size()) - 1 and best.z == 1: return cost
 		for target in level.edges[best.x]:
 			if target == level.home and best.z == 0: continue
 			var mask: int = best.y
-			for i in 3:
+			for i in level.items.size():
 				if target == level.items[i]: mask |= 1 << i
 			var key: int = best.z
-			if target == level.key and (not level.hard or best.y == 7): key = 1
+			if target == level.key and (not level.hard or best.y == (1 << level.items.size()) - 1): key = 1
 			var next := Vector3i(target, mask, key)
 			if not distances.has(next) or cost + 1 < distances[next]:
 				distances[next] = cost + 1
@@ -52,7 +52,7 @@ func verify(level: Dictionary, start: Dictionary = {}) -> void:
 	var answer: Dictionary = rules.solve_result(level, start)
 	check(answer.minimum_steps == oracle(level, start), "matches independent Dijkstra")
 	check(answer.solvable == (answer.minimum_steps >= 0), "explicit solvability")
-	check(answer.states_visited <= level.size * level.size * 16, "bounded state search")
+	check(answer.states_visited <= level.size * level.size * (1 << level.items.size()) * 2, "bounded state search")
 	check(start == untouched and level == level_before, "solver preserves inputs")
 	if answer.solvable:
 		var state: Dictionary = start.duplicate()
@@ -91,6 +91,13 @@ func _initialize() -> void:
 		for hard in [false, true]:
 			level.hard = hard
 			verify(level)
+	# Five-bone inventory cannot alias another position or accept only three bones.
+	var five := fixture()
+	five.items = [0, 2, 5, 4, 3]
+	five.hard = true
+	verify(five)
+	verify(five, {"pos": 0, "mask": 15, "key": false, "moves": 2})
+	check(not rules.won(five, {"pos": 6, "mask": 7, "key": true, "moves": 9}), "five-bone win rejects three bones")
 	# Every supported generated garden size, both modes, deterministic seeds.
 	var maximum_us := 0
 	for n in range(5, 15):
@@ -105,6 +112,6 @@ func _initialize() -> void:
 				var state: Dictionary = rules.initial()
 				for cell in answer.route: state = rules.move(level, state, cell)
 				check(rules.won(level, state), "generated optimum wins")
-				check(answer.states_visited <= n * n * 16, "generated search bound")
+				check(answer.states_visited <= n * n * (1 << level.items.size()) * 2, "generated search bound")
 	print("Garden BFS: %d checks; %d failures; slowest generated search %.2f ms." % [checks, failures, maximum_us / 1000.0])
 	quit(1 if failures else 0)

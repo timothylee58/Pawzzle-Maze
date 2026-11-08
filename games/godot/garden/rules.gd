@@ -74,6 +74,12 @@ func generate_legacy(n: int, value: String, hard: bool = false) -> Dictionary:
 		if p != key_cell and items.size() < 3 and (not hard or accessible.has(p)): items.append(p)
 	return {"size": n, "seed": value, "hard": hard, "edges": edges, "items": items, "key": key_cell, "home": n * n - 1}
 
+func bone_count(n: int) -> int:
+	return 5 if n >= 9 else 3
+
+func all_bones_mask(level: Dictionary) -> int:
+	return (1 << level.items.size()) - 1
+
 func initial(level: Dictionary = {}) -> Dictionary:
 	var state := {"pos": 0, "mask": 0, "key": false, "moves": 0}
 	if level.get("brutal", false): state.visited = [0]
@@ -84,17 +90,17 @@ func move(level: Dictionary, state: Dictionary, to: int) -> Dictionary:
 	if level.get("brutal", false) and state.get("visited", [state.pos]).has(to): return {}
 	if to == level.home and not state.key: return {}
 	var i: int = level.items.find(to)
-	var next := {"pos": to, "mask": state.mask | ((1 << i) if i >= 0 else 0), "key": state.key or (to == level.key and (not level.get("hard", false) or state.mask == 7)), "moves": state.moves + 1}
+	var next := {"pos": to, "mask": state.mask | ((1 << i) if i >= 0 else 0), "key": state.key or (to == level.key and (not level.get("hard", false) or state.mask == all_bones_mask(level))), "moves": state.moves + 1}
 	if level.get("brutal", false):
 		next.visited = state.get("visited", [state.pos]).duplicate()
 		next.visited.append(to)
 	return next
 
 func won(level: Dictionary, state: Dictionary) -> bool:
-	return state.pos == level.home and state.mask == 7 and state.key
+	return state.pos == level.home and state.mask == all_bones_mask(level) and state.key
 
 func state_key(state: Dictionary) -> int:
-	return state.pos * 16 + state.mask * 2 + int(state.key)
+	return state.pos * 64 + state.mask * 2 + int(state.key)
 
 ## Exact shortest route through position, collected-bone mask and key possession.
 ## Every legal tile move costs one; blocked attempts never enter the queue.
@@ -117,7 +123,7 @@ func solve_result(level: Dictionary, start: Dictionary = {}) -> Dictionary:
 	var nodes: Array = [{"state": start, "prev": -1}]
 	var seen: Dictionary = {search_key(level, start): true}
 	var at := 0
-	# Classic/Hard: at most n*n*8*2 states. Brutal also tracks visited cells.
+	# Classic/Hard: at most n*n*32*2 states. Brutal also tracks visited cells.
 	# Generated Brutal puzzles use the pre-certified exact optimum above.
 	while at < nodes.size():
 		var state: Dictionary = nodes[at].state
@@ -164,13 +170,14 @@ func grid_distance(a: int, b: int, n: int) -> int:
 	return absi(a % n - b % n) + absi(a / n - b / n)
 
 func placement_valid(level: Dictionary) -> bool:
+	if level.items.size() != bone_count(level.size): return false
 	var objects: Array = level.items + [level.key, level.home]
 	for i in objects.size():
 		for j in range(i + 1, objects.size()):
 			if grid_distance(objects[i], objects[j], level.size) < 3: return false
 	var occupied := {}
 	for cell in level.items + [level.key]:
-		if cell == 0 or cell == level.home or occupied.has(quadrant(cell, level.size)): return false
+		if cell == 0 or cell == level.home: return false
 		occupied[quadrant(cell, level.size)] = true
 	if occupied.size() != 4: return false
 	var distances := home_distances(level)
@@ -214,6 +221,18 @@ func _place_on_route(base: Dictionary, route: Array) -> Dictionary:
 					if distances[candidate] < distances[bone]: bone = candidate
 			bones.append(bone)
 		if bones.size() == 3:
+			var extra_pool: Array = []
+			for group in groups: extra_pool.append_array(group)
+			while bones.size() < bone_count(level.size) and not extra_pool.is_empty():
+				var pick := int(rand_value() * extra_pool.size())
+				var extra: int = extra_pool.pop_at(pick)
+				var separated := true
+				for placed in bones + [cell, level.home]:
+					if grid_distance(extra, placed, level.size) < 3: separated = false
+				if separated: bones.append(extra)
+			if bones.size() != bone_count(level.size):
+				groups[q].append(cell)
+				continue
 			level.items = bones
 			level.key = cell
 			level.route = route
@@ -255,7 +274,7 @@ func validate_route(level: Dictionary, route: Array) -> bool:
 	for cell in route:
 		if visited.has(cell): return false
 		visited[cell] = true
-		if cell == level.key and current.mask != 7: return false
+		if cell == level.key and current.mask != all_bones_mask(level): return false
 		current = move(strict, current, cell)
 		if current.is_empty(): return false
 	return won(strict, current)
@@ -313,6 +332,7 @@ func _brutal_fallback(n: int, value: String) -> Dictionary:
 				queue.append(q)
 	level.edges = edges
 	level.items = [n, (n - 1) * n, bone]
+	if n >= 9: level.items.append_array([4 * n, 3 * n + n - 2])
 	level.key = n - 1
 	level.route = route
 	var certified := _certify_brutal(level)

@@ -305,3 +305,30 @@ and uses compact checklist padding with readable text.
   until verified on the public page.
 - GamePix processed build: 3Lo3g7sRWS8afJlc3ybXcuw7b6K.
 - Public player verified serving the new build; evidence: garden-spaced-live.jpg and garden-structured-help.jpg. Editorial description persisted after reload, but public description still remained unchanged.
+
+## Same-maze modes, five bones and timer fixes
+
+- Default garden is 7x7. Sizes 9x9–14x14 now require five bones plus the key;
+  smaller gardens require three bones. All collectibles retain pairwise spacing
+  of at least three grid steps, and each quadrant has at least one bone or key.
+- Rules, key gating, victory and BFS use the level's actual bone count. State
+  packing supports all 32 five-bone masks without position collisions.
+- Every new UI puzzle is certified for Brutal mode before display. Changing mode
+  resets the run on the exact same maze, preserving seed, edges, bone positions,
+  key and house. The optimum is recalculated for the selected mode.
+- Restart responds while manually paused, clears that pause and resets elapsed
+  time. Timer reads X seconds without parentheses at the upper-right of the grid.
+- Sidebar descriptions occupy fixed height so switching modes cannot resize the
+  panel. Added a horizontal divider after New puzzle.
+- Tutorial cells accept adjacent mouse/touch taps through the shared movement
+  rules. Removed the Brutal Undo sentence and Moving Mocha, Puzzle controls,
+  Timing and practice sections. Goal text explains the size-based bone count.
+- Validation: 41,521 integration, 14,486 Brutal, 2,674 solver and 18,100 legacy
+  parity checks passed (76,781 total). Real clicks verify Restart while paused,
+  tutorial cell input, unchanged mode layouts and stable sidebar dimensions.
+  Independent solver checks cover five-bone inventory and reject three-bone wins.
+- Exported browser checks confirmed Restart displaying 0 seconds, default 7x7,
+  five bones on 9x9, the same maze after mode switching, and clickable tutorial.
+- Final release archive: 13,124,021 bytes.
+- GamePix release build: 3Lo6vDPPqp1om1a5rlBmdx1hlMV; entry resubmitted successfully.
+- Public player verified with the new build ID; evidence: garden-timer-modes-live.jpg and garden-five-bones-preview.jpg.
