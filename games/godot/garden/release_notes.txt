@@ -1,0 +1,4 @@
+Pawzzle Maze - Mocha's Garden
+Godot garden port of the team's HTML game.
+Controls: arrows/WASD or adjacent-tile tap; collect three bones and key, return home.
+Seeded puzzles 5x5, 6x6, 8x8. Hints mark assisted attempts; local bests only.
