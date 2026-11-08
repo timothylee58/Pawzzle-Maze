@@ -332,3 +332,17 @@ and uses compact checklist padding with readable text.
 - Final release archive: 13,124,021 bytes.
 - GamePix release build: 3Lo6vDPPqp1om1a5rlBmdx1hlMV; entry resubmitted successfully.
 - Public player verified with the new build ID; evidence: garden-timer-modes-live.jpg and garden-five-bones-preview.jpg.
+
+## Contributor credits and text refinements
+
+- Created by now credits Frankie for developing/refining the reference web app
+  prototype, Timothy for infrastructure and maze APIs, Han for Godot asset
+  integration, penetration testing and debugging, and Colin for Figma sprites
+  and visual assets.
+- Removed the mode/direction prompt above the tutorial controls. The completion
+  message still appears after solving the tutorial.
+- Sidebar now reads Minimum steps to win: X.
+- Godot export succeeded (13,124,240-byte ZIP). Browser visual checks confirm
+  the sidebar label, removed prompt, and all four credit paragraphs.
+- GamePix accepted and resubmitted build 3Lo7vW4v5aVTOPKqLT7Ljmwo2oO.
+- Public player verified serving the new build. Evidence: garden-contributor-credits.jpg and garden-credits-release-live.jpg.

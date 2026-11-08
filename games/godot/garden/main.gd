@@ -370,7 +370,7 @@ func _ready() -> void:
 	_add_help_section(help_box, "Your goal", "Collect three bones on 5×5–8×8 gardens, or five bones on 9×9–14×14 gardens. Pick up the key and return to the doghouse. Every puzzle has a verified route without backtracking. Practise on the strip by clicking an adjacent tile or using the arrows.")
 	for index in MODE_NAMES.size():
 		_add_help_section(help_box, MODE_NAMES[index] + " mode", MODE_DESCRIPTIONS[index])
-	_add_help_section(help_box, "Created by", "Frankie, Timothy, Han and Colin")
+	_add_help_section(help_box, "Created by", "Frankie — Developed and refined the web app prototype used as the reference for the Godot game.\n\nTimothy — Developed the infrastructure and maze APIs.\n\nHan — Integrated the assets into Godot and carried out penetration testing and debugging.\n\nColin — Designed the sprites and visual assets in Figma.")
 	help_cover.hide()
 	scroll.show()
 	get_node("/root/GPX").pause_changed.connect(_paused)
@@ -440,7 +440,7 @@ func _hide_help() -> void:
 
 func restart() -> void:
 	get_node("/root/GPX").set_pause_reason("manual", false)
-	minimum_label.text = "Minimum steps: %d" % optimal if optimal >= 0 else "No solution"
+	minimum_label.text = "Minimum steps to win: %d" % optimal if optimal >= 0 else "No solution"
 	state = rules.initial(level)
 	history.clear()
 	board.cancel_drag()
@@ -620,7 +620,8 @@ func _tutorial_step(cell: int) -> void:
 func _refresh_tutorial() -> void:
 	tutorial.show_state(tutorial_state, tutorial_history)
 	var complete := rules.won(tutorial_level, tutorial_state)
-	tutorial_status.text = "Mocha is home! Tutorial complete." if complete else MODE_NAMES[selected_mode] + " mode" + " — guide Mocha to the right."
+	tutorial_status.text = "Mocha is home! Tutorial complete." if complete else ""
+	tutorial_status.visible = complete
 	for arrow in tutorial_buttons: arrow.disabled = complete
 
 func _toggle_pause() -> void:
