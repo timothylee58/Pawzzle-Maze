@@ -236,3 +236,29 @@ and uses compact checklist padding with readable text.
   or Bubblegum Sans. Release ZIP: 12,886,695 bytes.
 - GamePix build: 3LnwXQ5jNxH9v3MnrldYCJiGTjw.
 - Public player verified live; evidence: garden-quadrants-live.jpg.
+
+## Brutal mode and circular controls
+
+- Added Classic / Hard / Brutal selection. Brutal requires all bones before key
+  and blocks revisiting any cell in the current path. Undo restores visited cells
+  along with inventory and position; Restart clears the path.
+- Generated Brutal puzzles have an exact optimal route certified with no repeated
+  cells. A Hard-mode BFS optimum that is legal under Brutal rules proves both
+  solvability and optimality. A bounded constructive fallback preserves quadrant
+  placement and a bone nearer home than the key. General Brutal BFS includes
+  visited-cell history; unlike Classic/Hard it is not bounded to 3,136 states.
+- Aligned timer, spaced arrow group, Undo, Restart and help/sound/pause on one row.
+  All icon controls are circular, including tutorial arrows and Back. Narrow
+  screens scroll this toolbar horizontally. Garden size text is centered.
+- Removed checklist, replaced trail dots with pawprints, bundled Fredoka and its
+  OFL license in both the Godot game and HTML loading screen.
+- Tutorial is independently playable with arrows and Restart, with descriptions
+  of all three modes. Opening it pauses and preserves the main puzzle.
+- Validation: 6,291 integration, 12,574 Brutal, 2,629 solver and 18,100 legacy
+  checks passed (39,594 total). Brutal tests include independent exhaustive small
+  graph comparisons, 100 generated puzzles and forced constructive fallbacks.
+  Maximum observed generation time: 2.043 seconds in the native test suite.
+- Export is 13,121,149 bytes. Native runtime had no errors. Desktop and 320x640
+  iframe layouts visually checked; physical phones and Safari were not tested.
+- GamePix accepted build 3Lo0L6aHbGxvSosTL2RzxUfjfwB; entry resubmitted.
+- Public jam player verified serving the new build; evidence: garden-brutal-live.jpg.

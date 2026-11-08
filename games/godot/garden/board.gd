@@ -65,7 +65,7 @@ func _draw() -> void:
 			draw_rect(rect.grow(-3), Color("#37ac8b"), false, 4)
 		for old in trail:
 			if old.pos == p:
-				draw_circle(rect.get_center(), 3, Color("#19a58b66"))
+				_draw_paw(rect.get_center(), cell_size * 0.25)
 				break
 		var item := ""
 		var i: int = level.items.find(p)
@@ -177,3 +177,10 @@ func _update_geometry() -> void:
 	board_rect = Rect2(Vector2((size.x - side) / 2, 14), Vector2.ONE * side)
 	cell_size = side / level.size
 	queue_redraw()
+
+func _draw_paw(center: Vector2, diameter: float) -> void:
+	var unit := maxf(1, diameter / 12)
+	var ink := Color("#207b6877")
+	draw_circle(center + Vector2(0, 2) * unit, 3.8 * unit, ink)
+	for toe in [Vector2(-4, -1), Vector2(-1.6, -4), Vector2(1.6, -4), Vector2(4, -1)]:
+		draw_circle(center + toe * unit, 1.6 * unit, ink)

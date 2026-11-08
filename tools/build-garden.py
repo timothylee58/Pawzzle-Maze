@@ -15,6 +15,8 @@ for name in ['main.gd', 'main.tscn', 'rules.gd', 'board.gd', 'tutorial_strip.gd'
     target = stage / 'garden' / name
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source / 'garden' / name, target)
+shutil.copytree(source / 'garden/fonts', stage / 'garden/fonts', dirs_exist_ok=True, ignore=shutil.ignore_patterns('*.import'))
+shutil.copy2(source / 'garden/fonts/OFL.txt', out / 'index-font-license.txt')
 shutil.copytree(source / 'garden/audio', stage / 'garden/audio', dirs_exist_ok=True, ignore=shutil.ignore_patterns('*.import'))
 shutil.copytree(source / 'Sprites/textures', stage / 'Sprites/textures', dirs_exist_ok=True, ignore=shutil.ignore_patterns('*.import'))
 shutil.copytree(source / 'addons/gpx-godot-plugin', stage / 'addons/gpx-godot-plugin', dirs_exist_ok=True)

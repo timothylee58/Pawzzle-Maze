@@ -71,11 +71,11 @@ func run() -> void:
 	for to in route: game.step(to)
 	await click_button(game.win_next)
 	check(not game.overlay.visible and game.level.seed != original_seed and not game.board.locked, "real click: Another adventure generates and unlocks")
-	game.hard_toggle.button_pressed = true
-	game._toggle_hard()
-	check(game.level.hard and game.hard_toggle.text == "Hard mode: ON", "visible hard toggle generates hard puzzle")
-	game.hard_toggle.button_pressed = false
-	game._toggle_hard()
+	game.mode_select.select(1)
+	game._mode_changed(1)
+	check(game.level.hard and game.mode_select.get_item_text(1) == "Hard mode", "mode selector generates hard puzzle")
+	game.mode_select.select(0)
+	game._mode_changed(0)
 	game.level = game.rules.generate_legacy(6, "PAW-1024")
 	game.restart()
 	var board = game.board
@@ -110,13 +110,7 @@ func run() -> void:
 	gpx.set_pause_reason("browser", false)
 	check(AudioServer.is_bus_mute(0), "mute survives pause")
 	check(game.size_select.item_count == 10, "sizes 5 through 14")
-	check(game.objective_rows.size() == 3, "three checklist rows")
-	for mask in 8:
-		game.state.mask = mask
-		game.refresh()
-		var count := int(bool(mask & 1)) + int(bool(mask & 2)) + int(bool(mask & 4))
-		check(game.objective_labels[0].text == "%d/3 bones collected" % count, "bone count mask %d" % mask)
-	check(game.objective_labels[1].text == "Key collected" and game.objective_labels[2].text == "Return home", "checklist wording")
+	check(game.sidebar.get_child_count() == 1, "checklist removed")
 	for n in range(5, 15):
 		game.size_select.select(n - 5)
 		game.generate()
@@ -208,7 +202,7 @@ func run() -> void:
 	await click_button(game.pause_button)
 	check(not paused and not game.board.blur_layer.visible and game.pause_button.tooltip_text == "Pause", "play icon resumes")
 
-	check(game.objectives_panel.get_parent() == game.sidebar and game.setup_panel.get_parent() == game.sidebar, "settings and checklist share left sidebar")
+	check(game.setup_panel.get_parent() == game.sidebar, "settings remain in left sidebar")
 	check(game.directions.get_global_rect().end.y <= game.board.get_global_rect().position.y, "arrows above board")
 	for dimensions in [Vector2i(1280, 900), Vector2i(640, 480), Vector2i(390, 844), Vector2i(320, 640)]:
 		root.size = dimensions
@@ -218,6 +212,46 @@ func run() -> void:
 		var rect: Rect2 = game.board.get_global_rect()
 		check(rect.end.x <= game.size.x + 1 and rect.end.y <= game.size.y + 1, "board fits viewport %s" % dimensions)
 		check(game.board.board_rect.size.x > 0 and game.board.board_rect.end.x <= game.board.size.x + 1 and game.board.board_rect.end.y <= game.board.size.y + 1, "all cells visible %s" % dimensions)
+
+	# Circular controls share a centerline, with real invisible spacing.
+	root.size = Vector2i(1280, 900)
+	await process_frame
+	await process_frame
+	for control in game.direction_buttons + [game.undo_button, game.restart_button, game.sound, game.pause_button, game.help_back]:
+		check(is_equal_approx(control.size.x, control.size.y), "icon control is circular, not elliptical")
+	check(absf(game.timer_label.get_global_rect().get_center().y - game.pause_button.get_global_rect().get_center().y) < 1, "all toolbar controls align horizontally")
+	check(game.directions.global_position.x - game.timer_label.get_global_rect().end.x >= 18, "timer group has invisible divider")
+	check(game.undo_button.global_position.x - game.directions.get_global_rect().end.x >= 18, "arrows group has invisible divider")
+	check(game.size_select.alignment == HORIZONTAL_ALIGNMENT_CENTER, "dropdown text centered")
+	check(game.theme.default_font.base_font.resource_path.ends_with("Fredoka.ttf"), "Fredoka is the game theme")
+
+	for mode in 3:
+		game.mode_select.select(mode)
+		game._mode_changed(mode)
+		var original_state: Dictionary = game.state.duplicate(true)
+		var original_elapsed: float = game.elapsed
+		game._show_help()
+		check(paused and game.tutorial_state.pos == 0, "tutorial opens fresh and pauses main game")
+		game._tutorial_move(Vector2i.UP)
+		check(game.tutorial_state.pos == 0, "tutorial vertical arrow cannot move")
+		for i in 9:
+			await click_button(game.tutorial_buttons[3])
+		check(game.rules.won(game.tutorial_level, game.tutorial_state), "tutorial solved with real arrow clicks in each mode")
+		check(game.state == original_state and game.elapsed == original_elapsed, "tutorial leaves main puzzle and timer unchanged")
+		await click_button(game.help_back)
+		check(not paused and game.scroll.visible, "circular back returns to game")
+		if mode == 2:
+			var route_brutal: Array = game.level.brutal_solution
+			game.step(route_brutal[0])
+			var after_step: Dictionary = game.state.duplicate(true)
+			game.step(0)
+			check(game.state == after_step, "Brutal blocks a revisit without side effects")
+			game.undo()
+			check(game.state.visited == [0], "Undo restores Brutal visited cells")
+			game.step(route_brutal[0])
+			check(game.state.pos == route_brutal[0], "Undone cell becomes available again")
+			game.restart()
+			check(game.state.visited == [0], "restart clears Brutal path")
 	game.saves = original
 	game._save()
 	game.queue_free()

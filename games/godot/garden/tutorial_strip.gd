@@ -1,6 +1,8 @@
 extends Control
 var textures: Dictionary = {}
-const PLACEMENT := {0: "princess_mocha", 2: "bone", 4: "bone", 5: "bone", 7: "key", 9: "dog_house"}
+var state: Dictionary = {"pos": 0, "mask": 0, "key": false}
+var trail: Array = []
+const PLACEMENT := {2: "bone", 4: "bone", 5: "bone", 7: "key", 9: "dog_house"}
 
 func _ready() -> void:
 	custom_minimum_size.y = 130
@@ -18,7 +20,11 @@ func _draw() -> void:
 		draw_rect(rect, Color("#efe4ae") if i % 2 == 0 else Color("#e8dda3"))
 		draw_rect(rect, Color("#9fb06d"), false, 1.5)
 		if PLACEMENT.has(i):
-			draw_texture_rect(textures[PLACEMENT[i]], rect.grow(-cell * 0.08), false)
+			var item: String = PLACEMENT[i]
+			var bone_index: int = [2, 4, 5].find(i)
+			if (bone_index < 0 or not (state.mask & (1 << bone_index))) and (i != 7 or not state.key):
+				draw_texture_rect(textures[item], rect.grow(-cell * 0.08), false)
+		if i == state.pos: draw_texture_rect(textures.princess_mocha, rect.grow(-cell * 0.08), false)
 
 	var bounds := Rect2(origin, Vector2(cell * 10, cell))
 	for wall in [
@@ -38,3 +44,8 @@ func _draw_hedge(rect: Rect2, cell: float) -> void:
 	for i in count:
 		var center := rect.position + (Vector2(4, (i + 0.5) * length / count) if vertical else Vector2((i + 0.5) * length / count, 4))
 		draw_texture_rect(textures.wall_bush, Rect2(center - Vector2.ONE * hedge_size / 2, Vector2.ONE * hedge_size), false)
+
+func show_state(current: Dictionary, history: Array) -> void:
+	state = current
+	trail = history
+	queue_redraw()

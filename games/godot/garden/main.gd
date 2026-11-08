@@ -17,7 +17,16 @@ var directions: GridContainer
 var help_back: Button
 var size_select: OptionButton
 var setup_panel: PanelContainer
-var hard_toggle: Button
+var mode_select: OptionButton
+var mode_description: Label
+var tutorial: Control
+var tutorial_status: Label
+var tutorial_buttons: Array = []
+var tutorial_level: Dictionary = {}
+var tutorial_state: Dictionary = {}
+var tutorial_history: Array = []
+var control_strip: ScrollContainer
+var control_row: HBoxContainer
 var pause_button: Button
 var win_next: Button
 var win_restart: Button
@@ -35,15 +44,9 @@ var help_cover: PanelContainer
 var help_scroll: ScrollContainer
 var elapsed := 0.0
 var timer_running := false
-var objective_rows: Array = []
-var objective_checks: Array = []
-var objective_labels: Array = []
-var checked_icon: Texture2D
-var unchecked_icon: Texture2D
 var result: Label
 var sound: Button
 var layout: BoxContainer
-var objectives_panel: PanelContainer
 var play_panel: VBoxContainer
 var overlay: PanelContainer
 var pause_cover: PanelContainer
@@ -101,6 +104,11 @@ func _arrow_icon(direction: Vector2i) -> Texture2D:
 	return _svg_icon('<path transform="rotate(%d 12 12)" d="M12 20V4m-7 7 7-7 7 7" fill="none" stroke="#174f50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' % angle)
 
 func _ready() -> void:
+	theme = Theme.new()
+	var playful_font := FontVariation.new()
+	playful_font.base_font = load("res://garden/fonts/Fredoka.ttf")
+	playful_font.variation_opentype = {"wght": 500}
+	theme.default_font = playful_font
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var bg := ColorRect.new()
 	bg.color = Color("#8fd1db")
@@ -148,7 +156,7 @@ func _ready() -> void:
 	brand_title.autowrap_mode = TextServer.AUTOWRAP_OFF
 	brand.add_child(brand_title)
 	header_right = VBoxContainer.new()
-	header.add_child(header_right)
+
 	timer_label = label("00:00", 22)
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -190,19 +198,21 @@ func _ready() -> void:
 	play_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	play_panel.add_theme_constant_override("separation", 10)
 	layout.add_child(play_panel)
-	toolbar_scroll = ScrollContainer.new()
-	toolbar_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	toolbar_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	page.add_child(toolbar_scroll)
-	page.move_child(toolbar_scroll, layout.get_index())
+	control_strip = ScrollContainer.new()
+	control_strip.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	control_strip.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	control_strip.custom_minimum_size.y = 58
+	page.add_child(control_strip)
+	page.move_child(control_strip, layout.get_index())
+	control_row = HBoxContainer.new()
+	control_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	control_row.add_theme_constant_override("separation", 16)
+	control_strip.add_child(control_row)
 	toolbar = HBoxContainer.new()
 	toolbar.add_theme_constant_override("separation", 6)
-	toolbar_margin = MarginContainer.new()
-	toolbar_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	toolbar_scroll.add_child(toolbar_margin)
-	toolbar.alignment = BoxContainer.ALIGNMENT_CENTER
-	toolbar_margin.add_child(toolbar)
+	control_row.add_child(toolbar)
 	toolbar.add_child(timer_label)
+	_add_gap(toolbar, 18)
 	directions = GridContainer.new()
 	directions.columns = 4
 	directions.add_theme_constant_override("h_separation", 6)
@@ -217,48 +227,25 @@ func _ready() -> void:
 		control.tooltip_text = entry[0]
 		control.name = "Move" + entry[0]
 		control.icon = _arrow_icon(direction)
-		control.expand_icon = true
-		control.add_theme_constant_override("icon_max_width", 28)
-		control.add_theme_font_size_override("font_size", 14)
-		for appearance in ["normal", "hover", "pressed"]:
-			var compact := control.get_theme_stylebox(appearance).duplicate() as StyleBoxFlat
-			compact.content_margin_left = 8
-			compact.content_margin_right = 8
-			compact.content_margin_top = 8
-			compact.content_margin_bottom = 8
-			control.add_theme_stylebox_override(appearance, compact)
-		control.custom_minimum_size = Vector2(44, 44)
+		_round_button(control)
 		control.focus_mode = Control.FOCUS_NONE
 		control.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
 		direction_buttons.append(control)
 		directions.add_child(control)
+	_add_gap(toolbar, 18)
 	undo_button = icon_button("undo", "Undo last move", undo)
 	toolbar.add_child(undo_button)
 	restart_button = icon_button("restart", "Restart puzzle", restart)
 	toolbar.add_child(restart_button)
-	for control in [undo_button, restart_button]:
-		control.expand_icon = true
-		control.add_theme_constant_override("icon_max_width", 24)
-		for appearance in ["normal", "hover", "pressed", "disabled"]:
-			var compact := style("#f1e6cc", 12)
-			compact.set_content_margin_all(6)
-			control.add_theme_stylebox_override(appearance, compact)
+	var toolbar_flex := Control.new()
+	toolbar_flex.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	control_row.add_child(toolbar_flex)
+	control_row.add_child(header_right)
 	board = Board.new()
 	board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	board.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	board.cell_pressed.connect(step)
 	play_panel.add_child(board)
-	objectives_panel = panel()
-	var checklist_style := style("#fff9e9")
-	checklist_style.content_margin_left = 12
-	checklist_style.content_margin_right = 12
-	objectives_panel.add_theme_stylebox_override("panel", checklist_style)
-	objectives_panel.custom_minimum_size.x = 0
-	objectives_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	sidebar.add_child(objectives_panel)
-	var objectives := VBoxContainer.new()
-	objectives.add_theme_constant_override("separation", 8)
-	objectives_panel.add_child(objectives)
 	var size_row := HBoxContainer.new()
 	size_row.add_theme_constant_override("separation", 6)
 	setup.add_child(size_row)
@@ -269,6 +256,7 @@ func _ready() -> void:
 	size_select.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	for n in range(5, 15): size_select.add_item("%d × %d" % [n, n], n)
 	size_select.add_theme_font_size_override("font_size", 13)
+	size_select.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	size_select.selected = 1
 	size_select.custom_minimum_size.y = 44
 	size_select.add_theme_stylebox_override("normal", style("#f1e6cc", 10))
@@ -280,42 +268,18 @@ func _ready() -> void:
 	size_select.add_theme_stylebox_override("normal", select_style)
 	size_select.item_selected.connect(func(_index): generate())
 	setup.add_child(button("New puzzle", generate, true))
-	hard_toggle = button("Hard mode: OFF", _toggle_hard, true)
-	hard_toggle.toggle_mode = true
-	hard_toggle.tooltip_text = "Toggle Hard mode and generate a new garden"
-	setup.add_child(hard_toggle)
-	setup.add_child(label("Hard mode: collect all bones before picking up the key.", 14))
+	mode_select = OptionButton.new()
+	for mode in ["Classic mode", "Hard mode", "Brutal mode"]: mode_select.add_item(mode)
+	mode_select.custom_minimum_size.y = 44
+	mode_select.add_theme_stylebox_override("normal", style("#229c7a", 12))
+	mode_select.add_theme_color_override("font_color", Color.WHITE)
+	mode_select.item_selected.connect(_mode_changed)
+	setup.add_child(mode_select)
+	mode_description = label("Collect the bones and key in any order.", 14)
+	setup.add_child(mode_description)
 	minimum_label = label("", 15)
 	minimum_label.tooltip_text = "Fewest legal tile moves from the start to collect all three bones and the key, then reach home in the selected mode."
 	setup.add_child(minimum_label)
-	objectives.add_child(label("YOUR CHECKLIST", 17))
-	checked_icon = _svg_icon('<rect x="2" y="2" width="20" height="20" rx="5" fill="#229c7a"/><path d="m6 12 4 4 8-9" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>')
-	unchecked_icon = _svg_icon('<rect x="2" y="2" width="20" height="20" rx="5" fill="#fff9e9" stroke="#8ca89c" stroke-width="2"/>')
-	for entry in [["bone", "0/3 bones collected"], ["key", "Key collected"], ["dog_house", "Return home"]]:
-		var row := PanelContainer.new()
-		row.add_theme_stylebox_override("panel", _objective_style(false))
-		objectives.add_child(row)
-		objective_rows.append(row)
-		var items := HBoxContainer.new()
-		items.add_theme_constant_override("separation", 6)
-		row.add_child(items)
-		var check := TextureRect.new()
-		check.texture = unchecked_icon
-		check.custom_minimum_size = Vector2(18, 18)
-		check.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		check.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		items.add_child(check)
-		objective_checks.append(check)
-		var sprite := TextureRect.new()
-		sprite.texture = load("res://Sprites/textures/" + entry[0] + ".png")
-		sprite.custom_minimum_size = Vector2(28, 28)
-		sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		items.add_child(sprite)
-		var caption := label(entry[1], 14)
-		caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		items.add_child(caption)
-		objective_labels.append(caption)
 	overlay = _make_overlay()
 	var win_box := VBoxContainer.new()
 	win_box.add_theme_constant_override("separation", 16)
@@ -355,11 +319,26 @@ func _ready() -> void:
 	var help_title := label("How to play", 30)
 	help_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	help_box.add_child(help_title)
-	var tutorial := TutorialStrip.new()
+	tutorial = TutorialStrip.new()
 	tutorial.name = "TutorialStrip"
 	help_box.add_child(tutorial)
+	tutorial_status = label("", 18)
+	tutorial_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	help_box.add_child(tutorial_status)
+	var tutorial_controls := HBoxContainer.new()
+	tutorial_controls.alignment = BoxContainer.ALIGNMENT_CENTER
+	help_box.add_child(tutorial_controls)
+	for entry in [["Up", Vector2i.UP], ["Left", Vector2i.LEFT], ["Down", Vector2i.DOWN], ["Right", Vector2i.RIGHT]]:
+		var direction: Vector2i = entry[1]
+		var arrow := button("", func(): _tutorial_move(direction))
+		arrow.icon = _arrow_icon(direction)
+		arrow.tooltip_text = entry[0]
+		_round_button(arrow)
+		tutorial_controls.add_child(arrow)
+		tutorial_buttons.append(arrow)
+	tutorial_controls.add_child(icon_button("restart", "Restart tutorial", _reset_tutorial))
 	help_box.add_child(label("Help Mocha collect all three bones and one key, then return to the doghouse.", 22))
-	help_box.add_child(label("NORMAL MODE\nCollect the bones and key in any order, then go home.\n\nHARD MODE\nCollect all three bones first. The key stays in the garden until you have every bone. If you walk over it early, come back for it later.", 18))
+	help_box.add_child(label("CLASSIC MODE\nCollect the bones and key in any order, then go home.\n\nHARD MODE\nCollect all three bones before picking up the key.\n\nBRUTAL MODE\nHard mode rules, plus no revisiting any cell. Paw prints mark your path. Use Undo to take back a move or Restart to try again. Every puzzle has a verified route with no backtracking.", 18))
 	help_box.add_child(label("Drag Mocha along open paths, tap an adjacent tile, or use the direction buttons. On a keyboard, use arrow keys or WASD. Hedges block movement.\n\nThe timer starts when the garden is generated and pauses while this page is open. Restart resets the current garden; New puzzle generates another.", 16))
 	help_cover.hide()
 	scroll.show()
@@ -398,18 +377,12 @@ func _resize() -> void:
 	layout.vertical = false
 	sidebar_scroll.custom_minimum_size.x = 194 if size.x < 600 else 240
 	directions.columns = 4
-	toolbar_scroll.custom_minimum_size.y = 64
-	toolbar_margin.add_theme_constant_override("margin_left", 0 if size.x < 600 else 252)
-	toolbar.add_theme_constant_override("separation", 4 if size.x < 600 else 6)
-	directions.add_theme_constant_override("h_separation", 4 if size.x < 600 else 6)
-	timer_label.add_theme_font_size_override("font_size", 18 if size.x < 600 else 22)
 	for control in direction_buttons + [undo_button, restart_button]:
-		control.custom_minimum_size = Vector2(36 if size.x < 600 else 44, 44)
-		control.add_theme_constant_override("icon_max_width", 20 if size.x < 600 else 28)
+		control.custom_minimum_size = Vector2(44, 44)
 
 func generate() -> void:
 	var seed_value := str(Time.get_ticks_usec()) + "-" + str(randi())
-	level = rules.generate(size_select.get_selected_id(), seed_value, hard_toggle.button_pressed)
+	level = rules.generate(size_select.get_selected_id(), seed_value, mode_select.selected > 0, mode_select.selected == 2)
 	optimal = rules.solve_result(level).minimum_steps
 	restart()
 
@@ -425,6 +398,7 @@ func _update_timer() -> void:
 func _show_help() -> void:
 	scroll.hide()
 	help_cover.show()
+	_reset_tutorial()
 	get_node("/root/GPX").set_pause_reason("help", true)
 
 func _hide_help() -> void:
@@ -435,7 +409,7 @@ func _hide_help() -> void:
 
 func restart() -> void:
 	minimum_label.text = "Minimum steps: %d" % optimal if optimal >= 0 else "No solution"
-	state = rules.initial()
+	state = rules.initial(level)
 	history.clear()
 	board.cancel_drag()
 	elapsed = 0.0
@@ -497,18 +471,11 @@ func next_puzzle() -> void:
 	generate()
 
 func best_key() -> String:
-	return ("hard:" if level.get("hard", false) else "normal:") + str(level.size) + ":" + level.seed
+	return ("brutal:" if level.get("brutal", false) else "hard:" if level.get("hard", false) else "normal:") + str(level.size) + ":" + level.seed
 
 func refresh() -> void:
 	board.locked = get_tree().paused or overlay.visible or help_cover.visible
 	undo_button.disabled = board.locked or history.is_empty()
-	var bones := int(bool(state.mask & 1)) + int(bool(state.mask & 2)) + int(bool(state.mask & 4))
-	objective_labels[0].text = "%d/3 bones collected" % bones
-	for i in 3:
-		var complete: bool = bones == 3 if i == 0 else bool(state.key) if i == 1 else rules.won(level, state)
-		objective_checks[i].texture = checked_icon if complete else unchecked_icon
-		objective_rows[i].add_theme_stylebox_override("panel", _objective_style(complete))
-		objective_rows[i].tooltip_text = "Completed" if complete else "Still to collect" if i < 2 else "Collect the bones and key, then reach home"
 	board.show_board(level, state, history, -1)
 
 func _toggle_sound() -> void:
@@ -547,14 +514,63 @@ func _save() -> void:
 		var file := FileAccess.open("user://garden-v1.json", FileAccess.WRITE)
 		if file != null: file.store_string(raw)
 func _layout_header() -> void:
-	if header == null or header_right == null: return
-	var compact := size.x < 600
-	header.custom_minimum_size.y = 110 if compact else 60
-	header_right.position = Vector2(maxf(0, header.size.x - header_right.size.x), 50 if compact else 0)
+	if header == null: return
+	header.custom_minimum_size.y = 46
 
-func _toggle_hard() -> void:
-	hard_toggle.text = "Hard mode: ON" if hard_toggle.button_pressed else "Hard mode: OFF"
+func _mode_changed(_index: int) -> void:
+	mode_description.text = [
+		"Collect the bones and key in any order.",
+		"Collect all bones before picking up the key.",
+		"All bones before the key. Never revisit a cell. Undo can take back a mistake."
+	][mode_select.selected]
 	generate()
+
+func _add_gap(parent: Container, width: float) -> void:
+	var gap := Control.new()
+	gap.custom_minimum_size.x = width
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(gap)
+
+func _round_button(control: Button) -> void:
+	control.custom_minimum_size = Vector2(44, 44)
+	control.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	control.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	control.expand_icon = true
+	control.add_theme_constant_override("icon_max_width", 24)
+	control.focus_mode = Control.FOCUS_NONE
+	for appearance in ["normal", "hover", "pressed", "disabled", "focus"]:
+		var circle := StyleBoxFlat.new()
+		circle.bg_color = Color("#f1e6cc") if appearance != "hover" else Color("#e6dbbd")
+		if appearance == "disabled": circle.bg_color = Color("#f1e6cc88")
+		circle.set_corner_radius_all(22)
+		circle.set_content_margin_all(10)
+		control.add_theme_stylebox_override(appearance, circle)
+
+func _reset_tutorial() -> void:
+	var edges: Array = []
+	for i in 10:
+		var adjacent: Array = []
+		if i > 0: adjacent.append(i - 1)
+		if i < 9: adjacent.append(i + 1)
+		edges.append(adjacent)
+	tutorial_level = {"size": 10, "edges": edges, "items": [2, 4, 5], "key": 7, "home": 9, "hard": mode_select.selected > 0, "brutal": mode_select.selected == 2}
+	tutorial_state = rules.initial(tutorial_level)
+	tutorial_history.clear()
+	_refresh_tutorial()
+
+func _tutorial_move(direction: Vector2i) -> void:
+	if rules.won(tutorial_level, tutorial_state) or direction.y != 0: return
+	var next: Dictionary = rules.move(tutorial_level, tutorial_state, tutorial_state.pos + direction.x)
+	if next.is_empty(): return
+	tutorial_history.append(tutorial_state)
+	tutorial_state = next
+	_refresh_tutorial()
+
+func _refresh_tutorial() -> void:
+	tutorial.show_state(tutorial_state, tutorial_history)
+	var complete := rules.won(tutorial_level, tutorial_state)
+	tutorial_status.text = "Mocha is home! Tutorial complete." if complete else mode_select.get_item_text(mode_select.selected) + " — guide Mocha to the right."
+	for arrow in tutorial_buttons: arrow.disabled = complete
 
 func _toggle_pause() -> void:
 	var gpx = get_node("/root/GPX")
@@ -564,7 +580,7 @@ func icon_button(kind: String, description: String, action: Callable) -> Button:
 	var control := button("", action)
 	control.icon = _control_icon(kind)
 	control.tooltip_text = description
-	control.custom_minimum_size = Vector2(48, 48)
+	_round_button(control)
 	control.focus_mode = Control.FOCUS_NONE
 	return control
 
@@ -582,10 +598,3 @@ func _control_icon(kind: String) -> Texture2D:
 	return _svg_icon(paths[kind])
 
 
-func _objective_style(complete: bool) -> StyleBoxFlat:
-	var box := style("#dcefdc" if complete else "#f1e6cc", 12)
-	box.content_margin_left = 8
-	box.content_margin_right = 8
-	box.content_margin_top = 10
-	box.content_margin_bottom = 10
-	return box

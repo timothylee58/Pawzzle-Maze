@@ -74,14 +74,21 @@ func generate_legacy(n: int, value: String, hard: bool = false) -> Dictionary:
 		if p != key_cell and items.size() < 3 and (not hard or accessible.has(p)): items.append(p)
 	return {"size": n, "seed": value, "hard": hard, "edges": edges, "items": items, "key": key_cell, "home": n * n - 1}
 
-func initial() -> Dictionary:
-	return {"pos": 0, "mask": 0, "key": false, "moves": 0}
+func initial(level: Dictionary = {}) -> Dictionary:
+	var state := {"pos": 0, "mask": 0, "key": false, "moves": 0}
+	if level.get("brutal", false): state.visited = [0]
+	return state
 
 func move(level: Dictionary, state: Dictionary, to: int) -> Dictionary:
 	if not level.edges[state.pos].has(to): return {}
+	if level.get("brutal", false) and state.get("visited", [state.pos]).has(to): return {}
 	if to == level.home and not state.key: return {}
 	var i: int = level.items.find(to)
-	return {"pos": to, "mask": state.mask | ((1 << i) if i >= 0 else 0), "key": state.key or (to == level.key and (not level.get("hard", false) or state.mask == 7)), "moves": state.moves + 1}
+	var next := {"pos": to, "mask": state.mask | ((1 << i) if i >= 0 else 0), "key": state.key or (to == level.key and (not level.get("hard", false) or state.mask == 7)), "moves": state.moves + 1}
+	if level.get("brutal", false):
+		next.visited = state.get("visited", [state.pos]).duplicate()
+		next.visited.append(to)
+	return next
 
 func won(level: Dictionary, state: Dictionary) -> bool:
 	return state.pos == level.home and state.mask == 7 and state.key
@@ -92,12 +99,26 @@ func state_key(state: Dictionary) -> int:
 ## Exact shortest route through position, collected-bone mask and key possession.
 ## Every legal tile move costs one; blocked attempts never enter the queue.
 ## Revisiting a tile with different inventory is a different search state.
+# Brutal mode must distinguish histories: inventory alone is not sufficient.
+func search_key(level: Dictionary, state: Dictionary) -> String:
+	var key := str(state_key(state))
+	if level.get("brutal", false):
+		var visited: Array = state.get("visited", [state.pos]).duplicate()
+		visited.sort()
+		key += ":" + str(visited)
+	return key
+
 func solve_result(level: Dictionary, start: Dictionary = {}) -> Dictionary:
-	if start.is_empty(): start = initial()
+	if start.is_empty():
+		if level.get("brutal", false) and level.has("brutal_solution"):
+			var route: Array = level.brutal_solution.duplicate()
+			return {"solvable": true, "minimum_steps": route.size(), "route": route, "states_visited": 0}
+		start = initial(level)
 	var nodes: Array = [{"state": start, "prev": -1}]
-	var seen: Dictionary = {state_key(start): true}
+	var seen: Dictionary = {search_key(level, start): true}
 	var at := 0
-	# Each of the n*n*8*2 states is queued at most once.
+	# Classic/Hard: at most n*n*8*2 states. Brutal also tracks visited cells.
+	# Generated Brutal puzzles use the pre-certified exact optimum above.
 	while at < nodes.size():
 		var state: Dictionary = nodes[at].state
 		if won(level, state):
@@ -111,8 +132,8 @@ func solve_result(level: Dictionary, start: Dictionary = {}) -> Dictionary:
 		for p in level.edges[state.pos]:
 			# Share gameplay transitions, including hard-mode key collection.
 			var next := move(level, state, p)
-			if not next.is_empty() and not seen.has(state_key(next)):
-				seen[state_key(next)] = true
+			if not next.is_empty() and not seen.has(search_key(level, next)):
+				seen[search_key(level, next)] = true
 				nodes.append({"state": next, "prev": at})
 		at += 1
 	# -1 explicitly distinguishes unreachable from an already-won state (0).
@@ -189,7 +210,8 @@ func _place_on_route(base: Dictionary, route: Array) -> Dictionary:
 		groups[q].append(cell)
 	return {}
 
-func generate(n: int, value: String, hard: bool = false) -> Dictionary:
+func generate(n: int, value: String, hard: bool = false, brutal: bool = false) -> Dictionary:
+	if brutal: return _generate_brutal(n, value)
 	var base := generate_legacy(n, value, hard)
 	for attempt in 32:
 		var seen := {0: true}
@@ -240,3 +262,61 @@ func validate_route(level: Dictionary, route: Array) -> bool:
 		current = move(strict, current, cell)
 		if current.is_empty(): return false
 	return won(strict, current)
+
+# A relaxed Hard-mode optimum is a lower bound for Brutal mode. If that
+# optimum has no repeated cells, it proves the exact Brutal optimum too.
+func _certify_brutal(level: Dictionary) -> Dictionary:
+	var solution: Array = solve(level)
+	if not validate_route(level, solution): return {}
+	level.brutal = true
+	level.brutal_solution = solution
+	return level
+
+func _generate_brutal(n: int, value: String) -> Dictionary:
+	for attempt in 24:
+		var candidate := generate(n, value + "-brutal-%d" % attempt, true)
+		var certified := _certify_brutal(candidate)
+		if not certified.is_empty(): return certified
+	return _brutal_fallback(n, value)
+
+func _brutal_fallback(n: int, value: String) -> Dictionary:
+	# Bounded fallback: a simple tour with a bone-to-home shortcut. Reaching
+	# that shortcut before the key is locked; after the key the forward exit
+	# is shorter than retracing the tour. Attach remaining cells as branches.
+	var level := generate_legacy(n, value + "-brutal-fallback", true)
+	var route: Array = []
+	for y in range(1, n): route.append(y * n)
+	for x in range(1, n - 1): route.append((n - 1) * n + x)
+	for y in range(n - 2, -1, -1): route.append(y * n + n - 2)
+	route.append(n - 1)
+	for y in range(1, n): route.append(y * n + n - 1)
+	var edges: Array = []
+	for i in n * n: edges.append([])
+	var visited := {0: true}
+	var previous := 0
+	for cell in route:
+		edges[previous].append(cell)
+		edges[cell].append(previous)
+		visited[cell] = true
+		previous = cell
+	var bone := (n - 1) * n + n - 2
+	edges[bone].append(level.home)
+	edges[level.home].append(bone)
+	var queue: Array = visited.keys()
+	var cursor := 0
+	while cursor < queue.size():
+		var p: int = queue[cursor]
+		cursor += 1
+		for q in neighbors(p, n):
+			if not visited.has(q):
+				edges[p].append(q)
+				edges[q].append(p)
+				visited[q] = true
+				queue.append(q)
+	level.edges = edges
+	level.items = [n, (n - 1) * n, bone]
+	level.key = n - 1
+	level.route = route
+	var certified := _certify_brutal(level)
+	assert(not certified.is_empty() and placement_valid(certified))
+	return certified
