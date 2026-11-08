@@ -276,3 +276,32 @@ and uses compact checklist padding with readable text.
 - All 6,291 integration checks pass. Exported desktop layout visually verified.
   Release ZIP: 13,121,654 bytes.
 - GamePix build: 3Lo1i9OqztFOtaSocBG48ETPHxG. Public listing description still serves older copy; credits are also included directly in the game.
+
+## Spaced objectives, radio modes and structured guide
+
+- Every pair among the three bones, key and house must be at least three
+  Manhattan grid steps apart. This also lower-bounds open-path distance.
+  The player is not included in the five-object spacing constraint.
+- Placement filters candidate bones against the key, house and prior bones.
+  All modes retain quadrant distribution, a bone nearer home than the key,
+  and a verified simple winning route. Reworked bounded fallback for 5x5–14x14;
+  its near-home bone is now three steps away rather than adjacent.
+- Difficulty mode is a labelled, mutually exclusive radio group. Selected labels
+  retain dark contrast and custom ring/dot icons clearly show the selection.
+- Sidebar and How to play use the same mode descriptions. The guide now uses
+  sentence-case headings and indented paragraphs, grouped by goal, mode and
+  controls. Tutorial extended to 14 cells so its five objects are also spaced
+  three steps apart while remaining playable in every mode.
+- Validation: 26,306 integration checks, including independent pairwise spacing
+  checks over 2,000 generated Classic/Hard puzzles and real radio clicks;
+  13,614 Brutal checks including forced fallbacks; 2,629 exact-solver checks.
+  All 42,549 checks passed. Slowest measured Brutal generation: 510.11 ms.
+- Export: 13,122,560 bytes. Browser verified radio contrast and help layout.
+- GamePix editorial text was saved again with current rules and all four names.
+  The public description remains stale despite saved metadata and resubmissions.
+  Public jam and Games screens expose no alternate description editor. Support
+  directs users to support@gamepix.com; an unsent message is prepared in
+  dist/gamepix-description-support.eml. Do not claim public text is corrected
+  until verified on the public page.
+- GamePix processed build: 3Lo3g7sRWS8afJlc3ybXcuw7b6K.
+- Public player verified serving the new build; evidence: garden-spaced-live.jpg and garden-structured-help.jpg. Editorial description persisted after reload, but public description still remained unchanged.

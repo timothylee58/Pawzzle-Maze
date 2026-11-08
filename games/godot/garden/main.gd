@@ -17,7 +17,14 @@ var directions: GridContainer
 var help_back: Button
 var size_select: OptionButton
 var setup_panel: PanelContainer
-var mode_select: OptionButton
+const MODE_NAMES := ["Classic", "Hard", "Brutal"]
+const MODE_DESCRIPTIONS := [
+	"Collect all three bones and the key in any order, then return home.",
+	"Collect all three bones before picking up the key, then return home. You may revisit cells.",
+	"Collect all three bones before picking up the key, then return home without revisiting any cell. Undo can take back a move."
+]
+var selected_mode := 0
+var mode_buttons: Array[CheckBox] = []
 var mode_description: Label
 var tutorial: Control
 var tutorial_status: Label
@@ -273,16 +280,23 @@ func _ready() -> void:
 	var mode_gap := Control.new()
 	mode_gap.custom_minimum_size.y = 20
 	setup.add_child(mode_gap)
-	mode_select = OptionButton.new()
-	for mode in ["Classic mode", "Hard mode", "Brutal mode"]: mode_select.add_item(mode)
-	mode_select.add_theme_font_size_override("font_size", 20)
-	mode_select.get_popup().add_theme_font_size_override("font_size", 20)
-	mode_select.custom_minimum_size.y = 44
-	mode_select.add_theme_stylebox_override("normal", style("#229c7a", 12))
-	mode_select.add_theme_color_override("font_color", Color.WHITE)
-	mode_select.item_selected.connect(_mode_changed)
-	setup.add_child(mode_select)
-	mode_description = label("Collect the bones and key in any order.", 18)
+	setup.add_child(label("Difficulty mode", 20))
+	var mode_group := ButtonGroup.new()
+	for index in MODE_NAMES.size():
+		var choice := CheckBox.new()
+		choice.text = MODE_NAMES[index]
+		choice.button_group = mode_group
+		choice.button_pressed = index == selected_mode
+		choice.custom_minimum_size.y = 44
+		choice.add_theme_font_size_override("font_size", 20)
+		for appearance in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
+			choice.add_theme_color_override(appearance, Color("#174f50"))
+		choice.add_theme_icon_override("radio_unchecked", _svg_icon('<circle cx="12" cy="12" r="8" fill="none" stroke="#174f50" stroke-width="2"/>'))
+		choice.add_theme_icon_override("radio_checked", _svg_icon('<circle cx="12" cy="12" r="8" fill="none" stroke="#174f50" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#229c7a"/>'))
+		choice.pressed.connect(_mode_changed.bind(index))
+		setup.add_child(choice)
+		mode_buttons.append(choice)
+	mode_description = label(MODE_DESCRIPTIONS[selected_mode], 18)
 	setup.add_child(mode_description)
 	var optimum_gap := Control.new()
 	optimum_gap.custom_minimum_size.y = 20
@@ -347,10 +361,13 @@ func _ready() -> void:
 		tutorial_controls.add_child(arrow)
 		tutorial_buttons.append(arrow)
 	tutorial_controls.add_child(icon_button("restart", "Restart tutorial", _reset_tutorial))
-	help_box.add_child(label("Help Mocha collect all three bones and one key, then return to the doghouse.", 22))
-	help_box.add_child(label("CLASSIC MODE\nCollect the bones and key in any order, then go home.\n\nHARD MODE\nCollect all three bones before picking up the key.\n\nBRUTAL MODE\nHard mode rules, plus no revisiting any cell. Paw prints mark your path. Use Undo to take back a move or Restart to try again. Every puzzle has a verified route with no backtracking.", 18))
-	help_box.add_child(label("Drag Mocha along open paths, tap an adjacent tile, or use the direction buttons. On a keyboard, use arrow keys or WASD. Hedges block movement.\n\nThe timer starts when the garden is generated and pauses while this page is open. Restart resets the current garden; New puzzle generates another.", 16))
-	help_box.add_child(label("Created by Frankie, Timothy, Han and Colin.", 18))
+	_add_help_section(help_box, "Your goal", "Guide Mocha to collect all three bones and one key, then return to the doghouse. Each puzzle has a verified route without backtracking.")
+	for index in MODE_NAMES.size():
+		_add_help_section(help_box, MODE_NAMES[index] + " mode", MODE_DESCRIPTIONS[index])
+	_add_help_section(help_box, "Moving Mocha", "Drag Mocha along open paths, tap an adjacent tile, or use the arrow buttons. On a keyboard, use the arrow keys or WASD. Hedges block movement. Paw prints show your path.")
+	_add_help_section(help_box, "Puzzle controls", "Undo takes back one move without changing the timer. Restart resets the current puzzle and timer. New puzzle generates another garden. Pause blurs the grid and stops the timer.")
+	_add_help_section(help_box, "Timing and practice", "The timer starts when a puzzle is generated and pauses while this guide is open. Use the arrows above to practise, then return to your puzzle with the back arrow.")
+	_add_help_section(help_box, "Created by", "Frankie, Timothy, Han and Colin")
 	help_cover.hide()
 	scroll.show()
 	get_node("/root/GPX").pause_changed.connect(_paused)
@@ -393,7 +410,7 @@ func _resize() -> void:
 
 func generate() -> void:
 	var seed_value := str(Time.get_ticks_usec()) + "-" + str(randi())
-	level = rules.generate(size_select.get_selected_id(), seed_value, mode_select.selected > 0, mode_select.selected == 2)
+	level = rules.generate(size_select.get_selected_id(), seed_value, selected_mode > 0, selected_mode == 2)
 	optimal = rules.solve_result(level).minimum_steps
 	restart()
 
@@ -528,13 +545,22 @@ func _layout_header() -> void:
 	if header == null: return
 	header.custom_minimum_size.y = 46
 
-func _mode_changed(_index: int) -> void:
-	mode_description.text = [
-		"Collect the bones and key in any order.",
-		"Collect all bones before picking up the key.",
-		"All bones before the key. Never revisit a cell. Undo can take back a mistake."
-	][mode_select.selected]
+func _mode_changed(index: int) -> void:
+	selected_mode = index
+	mode_buttons[index].set_pressed_no_signal(true)
+	mode_description.text = MODE_DESCRIPTIONS[index]
 	generate()
+
+func _add_help_section(parent: VBoxContainer, heading: String, body: String) -> void:
+	var section := VBoxContainer.new()
+	section.add_theme_constant_override("separation", 6)
+	parent.add_child(section)
+	section.add_child(label(heading, 22))
+	var inset := MarginContainer.new()
+	inset.add_theme_constant_override("margin_left", 22)
+	inset.add_theme_constant_override("margin_right", 22)
+	section.add_child(inset)
+	inset.add_child(label(body, 18))
 
 func _add_gap(parent: Container, width: float) -> void:
 	var gap := Control.new()
@@ -559,12 +585,12 @@ func _round_button(control: Button) -> void:
 
 func _reset_tutorial() -> void:
 	var edges: Array = []
-	for i in 10:
+	for i in 14:
 		var adjacent: Array = []
 		if i > 0: adjacent.append(i - 1)
-		if i < 9: adjacent.append(i + 1)
+		if i < 13: adjacent.append(i + 1)
 		edges.append(adjacent)
-	tutorial_level = {"size": 10, "edges": edges, "items": [2, 4, 5], "key": 7, "home": 9, "hard": mode_select.selected > 0, "brutal": mode_select.selected == 2}
+	tutorial_level = {"size": 14, "edges": edges, "items": [1, 4, 7], "key": 10, "home": 13, "hard": selected_mode > 0, "brutal": selected_mode == 2}
 	tutorial_state = rules.initial(tutorial_level)
 	tutorial_history.clear()
 	_refresh_tutorial()
@@ -580,7 +606,7 @@ func _tutorial_move(direction: Vector2i) -> void:
 func _refresh_tutorial() -> void:
 	tutorial.show_state(tutorial_state, tutorial_history)
 	var complete := rules.won(tutorial_level, tutorial_state)
-	tutorial_status.text = "Mocha is home! Tutorial complete." if complete else mode_select.get_item_text(mode_select.selected) + " — guide Mocha to the right."
+	tutorial_status.text = "Mocha is home! Tutorial complete." if complete else MODE_NAMES[selected_mode] + " mode" + " — guide Mocha to the right."
 	for arrow in tutorial_buttons: arrow.disabled = complete
 
 func _toggle_pause() -> void:

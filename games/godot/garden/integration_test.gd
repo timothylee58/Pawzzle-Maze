@@ -71,10 +71,8 @@ func run() -> void:
 	for to in route: game.step(to)
 	await click_button(game.win_next)
 	check(not game.overlay.visible and game.level.seed != original_seed and not game.board.locked, "real click: Another adventure generates and unlocks")
-	game.mode_select.select(1)
 	game._mode_changed(1)
-	check(game.level.hard and game.mode_select.get_item_text(1) == "Hard mode", "mode selector generates hard puzzle")
-	game.mode_select.select(0)
+	check(game.level.hard and game.mode_buttons[1].button_pressed, "mode selector generates hard puzzle")
 	game._mode_changed(0)
 	game.level = game.rules.generate_legacy(6, "PAW-1024")
 	game.restart()
@@ -158,6 +156,12 @@ func run() -> void:
 					if current.is_empty():
 						valid = false
 						break
+				var objects: Array = puzzle.items + [puzzle.key, puzzle.home]
+				for a in objects.size():
+					for b in range(a + 1, objects.size()):
+						var dx: int = absi(int(objects[a]) % n - int(objects[b]) % n)
+						var dy: int = absi(int(objects[a]) / n - int(objects[b]) / n)
+						check(dx + dy >= 3, "every object pair is at least three grid steps apart")
 				var quadrants := {}
 				for item in puzzle.items + [puzzle.key]:
 					var region := int(item % n >= n / 2) + 2 * int(item / n >= n / 2)
@@ -226,15 +230,18 @@ func run() -> void:
 	check(game.theme.default_font.base_font.resource_path.ends_with("Fredoka.ttf"), "Fredoka is the game theme")
 
 	for mode in 3:
-		game.mode_select.select(mode)
-		game._mode_changed(mode)
+		await click_button(game.mode_buttons[mode])
+		check(game.selected_mode == mode and game.mode_buttons[mode].button_pressed, "radio click selects mode")
+		for other in 3:
+			check(game.mode_buttons[other].button_pressed == (other == mode), "exactly one difficulty selected")
+		check(game.mode_description.text == game.MODE_DESCRIPTIONS[mode], "sidebar uses shared mode description")
 		var original_state: Dictionary = game.state.duplicate(true)
 		var original_elapsed: float = game.elapsed
 		game._show_help()
 		check(paused and game.tutorial_state.pos == 0, "tutorial opens fresh and pauses main game")
 		game._tutorial_move(Vector2i.UP)
 		check(game.tutorial_state.pos == 0, "tutorial vertical arrow cannot move")
-		for i in 9:
+		for i in 13:
 			await click_button(game.tutorial_buttons[3])
 		check(game.rules.won(game.tutorial_level, game.tutorial_state), "tutorial solved with real arrow clicks in each mode")
 		check(game.state == original_state and game.elapsed == original_elapsed, "tutorial leaves main puzzle and timer unchanged")

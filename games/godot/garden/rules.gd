@@ -164,6 +164,10 @@ func grid_distance(a: int, b: int, n: int) -> int:
 	return absi(a % n - b % n) + absi(a / n - b / n)
 
 func placement_valid(level: Dictionary) -> bool:
+	var objects: Array = level.items + [level.key, level.home]
+	for i in objects.size():
+		for j in range(i + 1, objects.size()):
+			if grid_distance(objects[i], objects[j], level.size) < 3: return false
 	var occupied := {}
 	for cell in level.items + [level.key]:
 		if cell == 0 or cell == level.home or occupied.has(quadrant(cell, level.size)): return false
@@ -195,7 +199,14 @@ func _place_on_route(base: Dictionary, route: Array) -> Dictionary:
 		for region in 4:
 			if region == q: continue
 			if groups[region].is_empty(): break
-			var choices: Array = groups[region]
+			var choices: Array = []
+			for candidate in groups[region]:
+				if grid_distance(candidate, cell, level.size) < 3 or grid_distance(candidate, level.home, level.size) < 3: continue
+				var separated := true
+				for placed in bones:
+					if grid_distance(candidate, placed, level.size) < 3: separated = false
+				if separated: choices.append(candidate)
+			if choices.is_empty(): break
 			var bone: int = choices[int(rand_value() * choices.size())]
 			# Prefer a close-to-home bone in the house quadrant.
 			if region == 3:
@@ -229,25 +240,11 @@ func generate(n: int, value: String, hard: bool = false, brutal: bool = false) -
 		if stack.is_empty(): continue
 		var candidate := _place_on_route(base, stack.slice(1))
 		if not candidate.is_empty(): return candidate
-	# Guaranteed bounded fallback: sweep three quadrants before the key's
-	# quadrant, then approach home down the outer column (or transpose).
-	var route: Array = []
-	for y in range(1, n): route.append(y * n)
-	for x in range(1, n - 1): route.append((n - 1) * n + x)
-	for y in range(n - 2, -1, -1): route.append(y * n + n - 2)
-	route.append(n - 1)
-	for y in range(1, n): route.append(y * n + n - 1)
-	if rand_value() < 0.5:
-		for i in route.size(): route[i] = (route[i] % n) * n + route[i] / n
-	# Direct house-to-bone edge guarantees a bone is nearest by walking too.
-	var near_home: int = (n - 1) * n + n - 2
-	var above_home: int = (n - 2) * n + n - 1
-	for cell in [near_home, above_home]:
-		if not base.edges[base.home].has(cell):
-			base.edges[base.home].append(cell)
-			base.edges[cell].append(base.home)
-	var fallback := _place_on_route(base, route)
-	assert(not fallback.is_empty(), "Guaranteed quadrant route must be valid")
+	# The constructive route also satisfies spacing on the smallest grid.
+	var fallback := _brutal_fallback(n, value)
+	fallback.hard = hard
+	fallback.erase("brutal")
+	fallback.erase("brutal_solution")
 	return fallback
 
 func validate_route(level: Dictionary, route: Array) -> bool:
@@ -273,7 +270,7 @@ func _certify_brutal(level: Dictionary) -> Dictionary:
 	return level
 
 func _generate_brutal(n: int, value: String) -> Dictionary:
-	for attempt in 24:
+	for attempt in 8:
 		var candidate := generate(n, value + "-brutal-%d" % attempt, true)
 		var certified := _certify_brutal(candidate)
 		if not certified.is_empty(): return certified
@@ -299,9 +296,10 @@ func _brutal_fallback(n: int, value: String) -> Dictionary:
 		edges[cell].append(previous)
 		visited[cell] = true
 		previous = cell
-	var bone := (n - 1) * n + n - 2
-	edges[bone].append(level.home)
-	edges[level.home].append(bone)
+	var bone := (n - 3) * n + n - 2
+	var shortcut := bone + 1
+	edges[bone].append(shortcut)
+	edges[shortcut].append(bone)
 	var queue: Array = visited.keys()
 	var cursor := 0
 	while cursor < queue.size():

@@ -2,7 +2,7 @@ extends Control
 var textures: Dictionary = {}
 var state: Dictionary = {"pos": 0, "mask": 0, "key": false}
 var trail: Array = []
-const PLACEMENT := {2: "bone", 4: "bone", 5: "bone", 7: "key", 9: "dog_house"}
+const PLACEMENT := {1: "bone", 4: "bone", 7: "bone", 10: "key", 13: "dog_house"}
 
 func _ready() -> void:
 	custom_minimum_size.y = 130
@@ -13,20 +13,20 @@ func _ready() -> void:
 
 func _draw() -> void:
 	if textures.is_empty(): return
-	var cell := maxf(1, minf((size.x - 28) / 10.0, 100.0))
-	var origin := Vector2((size.x - cell * 10) / 2, (size.y - cell) / 2)
-	for i in 10:
+	var cell := maxf(1, minf((size.x - 28) / 14.0, 100.0))
+	var origin := Vector2((size.x - cell * 14) / 2, (size.y - cell) / 2)
+	for i in 14:
 		var rect := Rect2(origin + Vector2(i * cell, 0), Vector2.ONE * cell)
 		draw_rect(rect, Color("#efe4ae") if i % 2 == 0 else Color("#e8dda3"))
 		draw_rect(rect, Color("#9fb06d"), false, 1.5)
 		if PLACEMENT.has(i):
 			var item: String = PLACEMENT[i]
-			var bone_index: int = [2, 4, 5].find(i)
-			if (bone_index < 0 or not (state.mask & (1 << bone_index))) and (i != 7 or not state.key):
+			var bone_index: int = [1, 4, 7].find(i)
+			if (bone_index < 0 or not (state.mask & (1 << bone_index))) and (i != 10 or not state.key):
 				draw_texture_rect(textures[item], rect.grow(-cell * 0.08), false)
 		if i == state.pos: draw_texture_rect(textures.princess_mocha, rect.grow(-cell * 0.08), false)
 
-	var bounds := Rect2(origin, Vector2(cell * 10, cell))
+	var bounds := Rect2(origin, Vector2(cell * 14, cell))
 	for wall in [
 		Rect2(bounds.position - Vector2(0, 4), Vector2(bounds.size.x, 8)),
 		Rect2(Vector2(bounds.position.x, bounds.end.y - 4), Vector2(bounds.size.x, 8)),
