@@ -214,3 +214,24 @@ and uses compact checklist padding with readable text.
 - Export archive: 12,882,965 bytes. Evidence: garden-bfs-success.jpg.
 - GamePix release build: 3LmrHMZwlr2Wz34YGvAwcAPmKBL.
 - Public jam player verified serving this build with Minimum steps visible.
+
+## Undo toolbar and quadrant placement
+
+- Toolbar order is timer, four movement arrows, Undo, Restart. Desktop controls
+  sit above the grid; narrow screens keep a compact single row. Title and paw
+  sit at the top left. Garden size label and selector share one horizontal row.
+- Undo restores previous position, inventory and move count. It does not rewind
+  elapsed time and is disabled with no history, during pause/help or after win.
+- Added the same paw artwork as inline SVG to the HTML loading screen.
+- Generator carves a randomized simple route into the base maze and places one
+  collectible in each quadrant. Middle rows/columns of odd sizes belong to the
+  bottom/right halves. A bounded constructive fallback preserves guarantees.
+- A bone must be strictly closer to home than the key by both shortest open-path
+  distance and Manhattan grid distance. Every accepted route is replayed with
+  hard-mode rules to prove all bones precede key and no tile is revisited.
+- Passed 6,267 integration, 2,629 BFS and 18,100 parity checks (26,996 total).
+  Includes 2,000 generated puzzles across sizes/modes and Undo inventory tests.
+  Native runtime has no errors; desktop and 320x640 exported layouts checked.
+- Fonts unchanged pending user choice. Suggested Fredoka (first choice), Baloo 2
+  or Bubblegum Sans. Release ZIP: 12,886,695 bytes.
+- GamePix build: 3LnwXQ5jNxH9v3MnrldYCJiGTjw.

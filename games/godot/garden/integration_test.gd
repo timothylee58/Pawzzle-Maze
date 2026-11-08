@@ -26,6 +26,12 @@ func run() -> void:
 		check(game.level.seed == original_seed and game.scroll.visible and not game.help_cover.visible, "arrow preserves screen and puzzle")
 	game.direction_buttons[3].pressed.emit()
 	check(game.state.pos == 1 and game.state.moves == 1 and game.history.size() == 1, "right button moves exactly one tile")
+	var elapsed_before_undo: float = game.elapsed
+	await click_button(game.undo_button)
+	check(game.state == initial and game.history.is_empty() and game.undo_button.disabled, "Undo restores position, inventory and moves")
+	check(game.elapsed >= elapsed_before_undo and game.timer_running, "Undo does not rewind timer")
+	game.undo()
+	check(game.state == initial, "empty Undo has no effect")
 	game.restart()
 	game._process(5.0)
 	check(game.elapsed == 5, "timer runs before first move")
@@ -158,7 +164,38 @@ func run() -> void:
 					if current.is_empty():
 						valid = false
 						break
+				var quadrants := {}
+				for item in puzzle.items + [puzzle.key]:
+					var region := int(item % n >= n / 2) + 2 * int(item / n >= n / 2)
+					quadrants[region] = true
+				check(quadrants.size() == 4, "one collectible in each quadrant")
+				var distance := {puzzle.home: 0}
+				var queue: Array = [puzzle.home]
+				for cursor in range(n * n):
+					if cursor >= queue.size(): break
+					for neighbor in puzzle.edges[queue[cursor]]:
+						if not distance.has(neighbor):
+							distance[neighbor] = distance[queue[cursor]] + 1
+							queue.append(neighbor)
+				var closer_bone := false
+				for bone in puzzle.items:
+					if distance[bone] < distance[puzzle.key] and (n - 1 - bone % n) + (n - 1 - bone / n) < (n - 1 - puzzle.key % n) + (n - 1 - puzzle.key / n): closer_bone = true
+				check(closer_bone, "a bone is strictly closer to home than key")
 				check(valid and game.rules.won(puzzle, current), "no-backtrack route size %d sample %d hard %s" % [n, sample, hard])
+	# Collect and undo each inventory transition in both modes.
+	for hard in [false, true]:
+		game.level = game.rules.generate(8, "undo-inventory", hard)
+		game.optimal = game.rules.solve_result(game.level).minimum_steps
+		game.restart()
+		for cell in game.level.route:
+			var before: Dictionary = game.state.duplicate()
+			game.step(cell)
+			if game.rules.won(game.level, game.state): break
+			if before.mask != game.state.mask or before.key != game.state.key:
+				game.undo()
+				check(game.state == before, "Undo restores collected bone/key in both modes")
+				game.step(cell)
+	game.restart()
 	var verified: Dictionary = game.rules.generate(6, "negative-validation", true)
 	check(not game.rules.validate_route(verified, []), "reject incomplete route")
 	check(not game.rules.validate_route(verified, [verified.route[0], 0] + verified.route), "reject backtracking")

@@ -22,7 +22,11 @@ var pause_button: Button
 var win_next: Button
 var win_restart: Button
 var header: Control
-var header_left: HBoxContainer
+var toolbar: HBoxContainer
+var toolbar_scroll: ScrollContainer
+var toolbar_margin: MarginContainer
+var undo_button: Button
+var restart_button: Button
 var header_right: VBoxContainer
 var title_center: CenterContainer
 var direction_buttons: Array = []
@@ -128,7 +132,7 @@ func _ready() -> void:
 	header.custom_minimum_size.y = 170
 	page.add_child(header)
 	title_center = CenterContainer.new()
-	title_center.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	title_center.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 	title_center.custom_minimum_size.y = 44
 	header.add_child(title_center)
 	var brand := HBoxContainer.new()
@@ -143,16 +147,12 @@ func _ready() -> void:
 	var brand_title := label("Pawzzle Maze", 28)
 	brand_title.autowrap_mode = TextServer.AUTOWRAP_OFF
 	brand.add_child(brand_title)
-	header_left = HBoxContainer.new()
-	header.add_child(header_left)
-	header_left.add_child(icon_button("restart", "Restart puzzle", restart))
 	header_right = VBoxContainer.new()
 	header.add_child(header_right)
 	timer_label = label("00:00", 22)
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	timer_label.autowrap_mode = TextServer.AUTOWRAP_OFF
-	header_left.add_child(timer_label)
 	var tools_row := HBoxContainer.new()
 	header_right.add_child(tools_row)
 	tools_row.add_child(icon_button("help", "How to play", _show_help))
@@ -175,6 +175,10 @@ func _ready() -> void:
 	sidebar.add_theme_constant_override("separation", 12)
 	sidebar_scroll.add_child(sidebar)
 	setup_panel = panel()
+	var setup_style := style("#fff9e9")
+	setup_style.content_margin_left = 12
+	setup_style.content_margin_right = 12
+	setup_panel.add_theme_stylebox_override("panel", setup_style)
 	setup_panel.custom_minimum_size.x = 0
 	setup_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	sidebar.add_child(setup_panel)
@@ -186,13 +190,24 @@ func _ready() -> void:
 	play_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	play_panel.add_theme_constant_override("separation", 10)
 	layout.add_child(play_panel)
-	var directions_center := CenterContainer.new()
-	play_panel.add_child(directions_center)
+	toolbar_scroll = ScrollContainer.new()
+	toolbar_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	toolbar_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	page.add_child(toolbar_scroll)
+	page.move_child(toolbar_scroll, layout.get_index())
+	toolbar = HBoxContainer.new()
+	toolbar.add_theme_constant_override("separation", 6)
+	toolbar_margin = MarginContainer.new()
+	toolbar_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	toolbar_scroll.add_child(toolbar_margin)
+	toolbar.alignment = BoxContainer.ALIGNMENT_CENTER
+	toolbar_margin.add_child(toolbar)
+	toolbar.add_child(timer_label)
 	directions = GridContainer.new()
 	directions.columns = 4
 	directions.add_theme_constant_override("h_separation", 6)
 	directions.add_theme_constant_override("v_separation", 6)
-	directions_center.add_child(directions)
+	toolbar.add_child(directions)
 	for entry in [["Up", Vector2i.UP], ["Left", Vector2i.LEFT], ["Down", Vector2i.DOWN], ["Right", Vector2i.RIGHT]]:
 		if entry[0] == "":
 			directions.add_child(Control.new())
@@ -217,6 +232,17 @@ func _ready() -> void:
 		control.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
 		direction_buttons.append(control)
 		directions.add_child(control)
+	undo_button = icon_button("undo", "Undo last move", undo)
+	toolbar.add_child(undo_button)
+	restart_button = icon_button("restart", "Restart puzzle", restart)
+	toolbar.add_child(restart_button)
+	for control in [undo_button, restart_button]:
+		control.expand_icon = true
+		control.add_theme_constant_override("icon_max_width", 24)
+		for appearance in ["normal", "hover", "pressed", "disabled"]:
+			var compact := style("#f1e6cc", 12)
+			compact.set_content_margin_all(6)
+			control.add_theme_stylebox_override(appearance, compact)
 	board = Board.new()
 	board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	board.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -233,15 +259,25 @@ func _ready() -> void:
 	var objectives := VBoxContainer.new()
 	objectives.add_theme_constant_override("separation", 8)
 	objectives_panel.add_child(objectives)
-	setup.add_child(label("Garden size", 15))
+	var size_row := HBoxContainer.new()
+	size_row.add_theme_constant_override("separation", 6)
+	setup.add_child(size_row)
+	var size_caption := label("Garden size", 13)
+	size_caption.autowrap_mode = TextServer.AUTOWRAP_OFF
+	size_row.add_child(size_caption)
 	size_select = OptionButton.new()
 	size_select.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	for n in range(5, 15): size_select.add_item("%d × %d" % [n, n], n)
+	size_select.add_theme_font_size_override("font_size", 13)
 	size_select.selected = 1
 	size_select.custom_minimum_size.y = 44
 	size_select.add_theme_stylebox_override("normal", style("#f1e6cc", 10))
 	size_select.add_theme_color_override("font_color", Color("#174f50"))
-	setup.add_child(size_select)
+	size_row.add_child(size_select)
+	var select_style := style("#f1e6cc", 10)
+	select_style.content_margin_left = 8
+	select_style.content_margin_right = 8
+	size_select.add_theme_stylebox_override("normal", select_style)
 	size_select.item_selected.connect(func(_index): generate())
 	setup.add_child(button("New puzzle", generate, true))
 	hard_toggle = button("Hard mode: OFF", _toggle_hard, true)
@@ -360,8 +396,16 @@ func _resize() -> void:
 	for popup in [overlay, pause_cover]:
 		if popup != null: popup.get_meta("card").custom_minimum_size.x = minf(440, size.x - 40)
 	layout.vertical = false
-	sidebar_scroll.custom_minimum_size.x = 160 if size.x < 600 else 240
-	directions.columns = 2 if size.x < 600 else 4
+	sidebar_scroll.custom_minimum_size.x = 194 if size.x < 600 else 240
+	directions.columns = 4
+	toolbar_scroll.custom_minimum_size.y = 64
+	toolbar_margin.add_theme_constant_override("margin_left", 0 if size.x < 600 else 252)
+	toolbar.add_theme_constant_override("separation", 4 if size.x < 600 else 6)
+	directions.add_theme_constant_override("h_separation", 4 if size.x < 600 else 6)
+	timer_label.add_theme_font_size_override("font_size", 18 if size.x < 600 else 22)
+	for control in direction_buttons + [undo_button, restart_button]:
+		control.custom_minimum_size = Vector2(36 if size.x < 600 else 44, 44)
+		control.add_theme_constant_override("icon_max_width", 20 if size.x < 600 else 28)
 
 func generate() -> void:
 	var seed_value := str(Time.get_ticks_usec()) + "-" + str(randi())
@@ -399,6 +443,12 @@ func restart() -> void:
 	_update_timer()
 	overlay.hide()
 	for control in direction_buttons: control.disabled = false
+	refresh()
+
+func undo() -> void:
+	if get_tree().paused or overlay.visible or help_cover.visible or history.is_empty(): return
+	state = history.pop_back()
+	board.cancel_drag()
 	refresh()
 
 func begin() -> void:
@@ -451,6 +501,7 @@ func best_key() -> String:
 
 func refresh() -> void:
 	board.locked = get_tree().paused or overlay.visible or help_cover.visible
+	undo_button.disabled = board.locked or history.is_empty()
 	var bones := int(bool(state.mask & 1)) + int(bool(state.mask & 2)) + int(bool(state.mask & 4))
 	objective_labels[0].text = "%d/3 bones collected" % bones
 	for i in 3:
@@ -475,6 +526,7 @@ func _paused(value: bool) -> void:
 	pause_button.tooltip_text = "Resume" if value else "Pause"
 	board.set_blurred(value)
 	for control in direction_buttons: control.disabled = value or overlay.visible
+	undo_button.disabled = value or overlay.visible or history.is_empty()
 	if value: board.cancel_drag()
 	if music != null: music.stream_paused = value
 
@@ -497,8 +549,7 @@ func _save() -> void:
 func _layout_header() -> void:
 	if header == null or header_right == null: return
 	var compact := size.x < 600
-	header.custom_minimum_size.y = 135 if compact else 90
-	header_left.position = Vector2(0, 50 if compact else 0)
+	header.custom_minimum_size.y = 110 if compact else 60
 	header_right.position = Vector2(maxf(0, header.size.x - header_right.size.x), 50 if compact else 0)
 
 func _toggle_hard() -> void:
@@ -523,6 +574,7 @@ func _control_icon(kind: String) -> Texture2D:
 		"pause": '<path d="M8 5v14M16 5v14" stroke="#174f50" stroke-width="4"/>',
 		"play": '<path d="m7 4 14 8-14 8z" fill="#174f50"/>',
 		"help": '<path d="M8 8a4 4 0 1 1 6 3.5c-2 1-2 2-2 3" fill="none" stroke="#174f50" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="19" r="1.4" fill="#174f50"/>',
+		"undo": '<path d="M9 5 3 11l6 6M3 11h11a6 6 0 0 1 6 6v2" fill="none" stroke="#174f50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',
 		"restart": '<path d="M5 8a8 8 0 1 1-1 7M5 3v6h6" fill="none" stroke="#174f50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',
 		"sound": '<path d="M3 9h4l5-4v14l-5-4H3z" fill="#174f50"/><path d="M16 8q4 4 0 8M19 5q7 7 0 14" fill="none" stroke="#174f50" stroke-width="2" stroke-linecap="round"/>',
 		"muted": '<path d="M3 9h4l5-4v14l-5-4H3z" fill="#174f50"/><path d="m16 9 6 6m0-6-6 6" stroke="#174f50" stroke-width="2" stroke-linecap="round"/>'

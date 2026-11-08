@@ -122,41 +122,111 @@ func solve_result(level: Dictionary, start: Dictionary = {}) -> Dictionary:
 func solve(level: Dictionary, start: Dictionary = {}) -> Array:
 	return solve_result(level, start).route
 
-# Place objectives on a simple route, and replay it before accepting the maze.
-func generate(n: int, value: String, hard: bool = false) -> Dictionary:
-	for attempt in 32:
-		var candidate := generate_legacy(n, value + ("-retry-%d" % attempt if attempt else ""), hard)
-		var parents := {0: -1}
-		var queue: Array = [0]
-		var at := 0
-		while at < queue.size() and not parents.has(candidate.home):
-			var p: int = queue[at]
-			at += 1
-			for q in candidate.edges[p]:
-				if not parents.has(q):
-					parents[q] = p
-					queue.append(q)
-		if not parents.has(candidate.home): continue
-		var route: Array = []
-		var cursor: int = candidate.home
-		while cursor != 0:
-			route.push_front(cursor)
-			cursor = parents[cursor]
-		if route.size() < 5: continue
-		var slots: Array = range(route.size() - 1)
-		for i in range(slots.size() - 1, 0, -1):
-			var j := int(rand_value() * (i + 1))
-			var temp = slots[i]
-			slots[i] = slots[j]
-			slots[j] = temp
-		slots = slots.slice(0, 4)
-		slots.sort()
-		candidate.items = [route[slots[0]], route[slots[1]], route[slots[2]]]
-		candidate.key = route[slots[3]]
-		candidate.route = route
-		if validate_route(candidate, route): return candidate
-	push_error("Could not generate a verified garden")
+# Odd-sized grids assign their middle row/column to bottom/right.
+func quadrant(cell: int, n: int) -> int:
+	return int(cell % n >= n / 2) + 2 * int(cell / n >= n / 2)
+
+func home_distances(level: Dictionary) -> Dictionary:
+	var distances := {level.home: 0}
+	var queue: Array = [level.home]
+	var at := 0
+	while at < queue.size():
+		var p: int = queue[at]
+		at += 1
+		for q in level.edges[p]:
+			if not distances.has(q):
+				distances[q] = distances[p] + 1
+				queue.append(q)
+	return distances
+
+func grid_distance(a: int, b: int, n: int) -> int:
+	return absi(a % n - b % n) + absi(a / n - b / n)
+
+func placement_valid(level: Dictionary) -> bool:
+	var occupied := {}
+	for cell in level.items + [level.key]:
+		if cell == 0 or cell == level.home or occupied.has(quadrant(cell, level.size)): return false
+		occupied[quadrant(cell, level.size)] = true
+	if occupied.size() != 4: return false
+	var distances := home_distances(level)
+	if not distances.has(level.key): return false
+	for bone in level.items:
+		if distances.has(bone) and distances[bone] < distances[level.key] and grid_distance(bone, level.home, level.size) < grid_distance(level.key, level.home, level.size):
+			return true
+	return false
+
+# Carve a simple randomized route into the maze, then choose one collectible
+# per quadrant. Bones precede the key on this certified no-backtracking route.
+func _place_on_route(base: Dictionary, route: Array) -> Dictionary:
+	var level := base.duplicate(true)
+	var previous := 0
+	for cell in route:
+		if not level.edges[previous].has(cell):
+			level.edges[previous].append(cell)
+			level.edges[cell].append(previous)
+		previous = cell
+	var distances := home_distances(level)
+	var groups: Array = [[], [], [], []]
+	for cell in route:
+		if cell == level.home: break
+		var q := quadrant(cell, level.size)
+		var bones: Array = []
+		for region in 4:
+			if region == q: continue
+			if groups[region].is_empty(): break
+			var choices: Array = groups[region]
+			var bone: int = choices[int(rand_value() * choices.size())]
+			# Prefer a close-to-home bone in the house quadrant.
+			if region == 3:
+				for candidate in choices:
+					if distances[candidate] < distances[bone]: bone = candidate
+			bones.append(bone)
+		if bones.size() == 3:
+			level.items = bones
+			level.key = cell
+			level.route = route
+			if placement_valid(level) and validate_route(level, route): return level
+		groups[q].append(cell)
 	return {}
+
+func generate(n: int, value: String, hard: bool = false) -> Dictionary:
+	var base := generate_legacy(n, value, hard)
+	for attempt in 32:
+		var seen := {0: true}
+		var stack: Array = [0]
+		while not stack.is_empty() and stack.back() != base.home:
+			var options: Array = []
+			for q in neighbors(stack.back(), n):
+				if not seen.has(q): options.append(q)
+			if options.is_empty():
+				stack.pop_back()
+			else:
+				var q: int = options[int(rand_value() * options.size())]
+				seen[q] = true
+				stack.append(q)
+		if stack.is_empty(): continue
+		var candidate := _place_on_route(base, stack.slice(1))
+		if not candidate.is_empty(): return candidate
+	# Guaranteed bounded fallback: sweep three quadrants before the key's
+	# quadrant, then approach home down the outer column (or transpose).
+	var route: Array = []
+	for y in range(1, n): route.append(y * n)
+	for x in range(1, n - 1): route.append((n - 1) * n + x)
+	for y in range(n - 2, -1, -1): route.append(y * n + n - 2)
+	route.append(n - 1)
+	for y in range(1, n): route.append(y * n + n - 1)
+	if rand_value() < 0.5:
+		for i in route.size(): route[i] = (route[i] % n) * n + route[i] / n
+	# Direct house-to-bone edge guarantees a bone is nearest by walking too.
+	var near_home: int = (n - 1) * n + n - 2
+	var above_home: int = (n - 2) * n + n - 1
+	for cell in [near_home, above_home]:
+		if not base.edges[base.home].has(cell):
+			base.edges[base.home].append(cell)
+			base.edges[cell].append(base.home)
+	var fallback := _place_on_route(base, route)
+	assert(not fallback.is_empty(), "Guaranteed quadrant route must be valid")
+	return fallback
 
 func validate_route(level: Dictionary, route: Array) -> bool:
 	var visited := {0: true}
