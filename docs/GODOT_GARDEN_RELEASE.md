@@ -401,3 +401,35 @@ Outstanding or outside verification:
 - Root https://timothylee58.github.io/ads.txt now serves the GamePix snippet
   (property marker 0INL7). GamePix property verification itself was not checked;
   this publisher monetization task is separate from jam entry submission.
+
+## Follow-up and 15-hour summary - 8 November 2026, noon Malaysia time
+
+Correction: the earlier support send returned a message ID but subsequently
+received a Gmail delivery-failure notice. The earlier record of successful
+sending was premature. Retried with an explicit authenticated From address at
+11:59:56 Malaysia time; Gmail now confirms SENT. No support reply was present
+at the follow-up check. Receipt by GamePix is not independently confirmed.
+
+The developer account exposes games but no publisher website-property or
+ads.txt verification controls. Root ads.txt is online; property-level verification
+requires access to the owning publisher account and remains pending.
+
+Work during roughly 21:00 on 7 November through noon on 8 November:
+- Improved objective sprites, movement controls, touch dragging and adjacent
+  tile input; corrected success-dialog buttons, restart and timer behavior.
+- Built playable tutorial input, shared mode guidance and individual credits
+  for Frankie, Timothy, Han and Colin.
+- Added Classic/Hard/Brutal modes, same-maze switching, no-revisit rules and
+  verified no-backtracking solution routes.
+- Implemented exact BFS minimum steps, objective spacing, quadrant coverage,
+  and three/five-bone objectives based on garden size.
+- Refined the fitted grid, unified left sidebar, circular controls, bush borders,
+  checkerboard tiles, pawprint trails, pause blur and Fredoka typography.
+- Limited selectable garden sizes to 5x5-10x10, default 7x7.
+- Exported and published successive Godot builds to the same GamePix jam entry;
+  latest public build remains 3Lo9eclQK2QqKqoIj92erlt1Huw.
+- Audited the 13-page participant guide, metadata, archive and team access.
+  Latest full verification: 76,745 passing checks/tests. Updated stale test
+  expectations only; physical mobile/Safari/ad playback remain untested.
+- Pushed implementation, release ZIP, evidence and audit to codex/godot-garden.
+  PR #6 is OPEN against main; no merge has been performed.
