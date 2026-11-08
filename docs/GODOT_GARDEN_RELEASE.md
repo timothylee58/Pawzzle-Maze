@@ -235,3 +235,4 @@ and uses compact checklist padding with readable text.
 - Fonts unchanged pending user choice. Suggested Fredoka (first choice), Baloo 2
   or Bubblegum Sans. Release ZIP: 12,886,695 bytes.
 - GamePix build: 3LnwXQ5jNxH9v3MnrldYCJiGTjw.
+- Public player verified live; evidence: garden-quadrants-live.jpg.
