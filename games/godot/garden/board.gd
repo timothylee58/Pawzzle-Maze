@@ -60,7 +60,7 @@ func _draw() -> void:
 	draw_style_box(island, board_rect.grow(12))
 	for p in level.size * level.size:
 		var rect := Rect2(board_rect.position + Vector2(p % level.size, p / level.size) * cell_size, Vector2.ONE * cell_size)
-		draw_rect(rect, Color("#efe4ae") if p % 2 == 0 else Color("#e8dda3"))
+		draw_rect(rect, Color("#efe4ae") if (p % int(level.size) + int(p / int(level.size))) % 2 == 0 else Color("#e8dda3"))
 		if p == hint:
 			draw_rect(rect.grow(-3), Color("#37ac8b"), false, 4)
 		for old in trail:

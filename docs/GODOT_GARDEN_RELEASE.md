@@ -262,3 +262,17 @@ and uses compact checklist padding with readable text.
   iframe layouts visually checked; physical phones and Safari were not tested.
 - GamePix accepted build 3Lo0L6aHbGxvSosTL2RzxUfjfwB; entry resubmitted.
 - Public jam player verified serving the new build; evidence: garden-brutal-live.jpg.
+
+## Single-row header and checkerboard update
+
+- Logo/title, timer and movement controls, and help/sound/pause share one row.
+  Undo and Restart remain available beside movement controls.
+- Sidebar sections have additional vertical separation. All sidebar text and
+  dropdown entries are enlarged by approximately 25%, rounded up to whole pixels.
+- Tile colors alternate by row-plus-column parity, including even-sized grids.
+- Timer displays total elapsed whole seconds as `(X seconds)`.
+- Credits name Frankie, Timothy, Han and Colin in How to play and the GamePix
+  description editor. Updated listing instructions reflect all three modes.
+- All 6,291 integration checks pass. Exported desktop layout visually verified.
+  Release ZIP: 13,121,654 bytes.
+- GamePix build: 3Lo1i9OqztFOtaSocBG48ETPHxG. Public listing description still serves older copy; credits are also included directly in the game.

@@ -136,13 +136,10 @@ func _ready() -> void:
 	page.add_theme_constant_override("separation", 12)
 	page.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_child(page)
-	header = Control.new()
-	header.custom_minimum_size.y = 170
-	page.add_child(header)
 	title_center = CenterContainer.new()
 	title_center.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 	title_center.custom_minimum_size.y = 44
-	header.add_child(title_center)
+	title_center.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var brand := HBoxContainer.new()
 	brand.add_theme_constant_override("separation", 10)
 	title_center.add_child(brand)
@@ -157,7 +154,7 @@ func _ready() -> void:
 	brand.add_child(brand_title)
 	header_right = VBoxContainer.new()
 
-	timer_label = label("00:00", 22)
+	timer_label = label("(0 seconds)", 22)
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	timer_label.autowrap_mode = TextServer.AUTOWRAP_OFF
@@ -169,8 +166,6 @@ func _ready() -> void:
 	pause_button = icon_button("pause", "Pause", _toggle_pause)
 	pause_button.process_mode = Node.PROCESS_MODE_ALWAYS
 	tools_row.add_child(pause_button)
-	header.resized.connect(_layout_header)
-	header_right.resized.connect(_layout_header)
 	layout = BoxContainer.new()
 	layout.add_theme_constant_override("separation", 12)
 	layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -208,6 +203,10 @@ func _ready() -> void:
 	control_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	control_row.add_theme_constant_override("separation", 16)
 	control_strip.add_child(control_row)
+	control_row.add_child(title_center)
+	var brand_flex := Control.new()
+	brand_flex.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	control_row.add_child(brand_flex)
 	toolbar = HBoxContainer.new()
 	toolbar.add_theme_constant_override("separation", 6)
 	control_row.add_child(toolbar)
@@ -249,13 +248,14 @@ func _ready() -> void:
 	var size_row := HBoxContainer.new()
 	size_row.add_theme_constant_override("separation", 6)
 	setup.add_child(size_row)
-	var size_caption := label("Garden size", 13)
+	var size_caption := label("Garden size", 17)
 	size_caption.autowrap_mode = TextServer.AUTOWRAP_OFF
 	size_row.add_child(size_caption)
 	size_select = OptionButton.new()
 	size_select.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	for n in range(5, 15): size_select.add_item("%d × %d" % [n, n], n)
-	size_select.add_theme_font_size_override("font_size", 13)
+	size_select.add_theme_font_size_override("font_size", 17)
+	size_select.get_popup().add_theme_font_size_override("font_size", 17)
 	size_select.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	size_select.selected = 1
 	size_select.custom_minimum_size.y = 44
@@ -267,17 +267,27 @@ func _ready() -> void:
 	select_style.content_margin_right = 8
 	size_select.add_theme_stylebox_override("normal", select_style)
 	size_select.item_selected.connect(func(_index): generate())
-	setup.add_child(button("New puzzle", generate, true))
+	var new_puzzle := button("New puzzle", generate, true)
+	new_puzzle.add_theme_font_size_override("font_size", 19)
+	setup.add_child(new_puzzle)
+	var mode_gap := Control.new()
+	mode_gap.custom_minimum_size.y = 20
+	setup.add_child(mode_gap)
 	mode_select = OptionButton.new()
 	for mode in ["Classic mode", "Hard mode", "Brutal mode"]: mode_select.add_item(mode)
+	mode_select.add_theme_font_size_override("font_size", 20)
+	mode_select.get_popup().add_theme_font_size_override("font_size", 20)
 	mode_select.custom_minimum_size.y = 44
 	mode_select.add_theme_stylebox_override("normal", style("#229c7a", 12))
 	mode_select.add_theme_color_override("font_color", Color.WHITE)
 	mode_select.item_selected.connect(_mode_changed)
 	setup.add_child(mode_select)
-	mode_description = label("Collect the bones and key in any order.", 14)
+	mode_description = label("Collect the bones and key in any order.", 18)
 	setup.add_child(mode_description)
-	minimum_label = label("", 15)
+	var optimum_gap := Control.new()
+	optimum_gap.custom_minimum_size.y = 20
+	setup.add_child(optimum_gap)
+	minimum_label = label("", 19)
 	minimum_label.tooltip_text = "Fewest legal tile moves from the start to collect all three bones and the key, then reach home in the selected mode."
 	setup.add_child(minimum_label)
 	overlay = _make_overlay()
@@ -340,6 +350,7 @@ func _ready() -> void:
 	help_box.add_child(label("Help Mocha collect all three bones and one key, then return to the doghouse.", 22))
 	help_box.add_child(label("CLASSIC MODE\nCollect the bones and key in any order, then go home.\n\nHARD MODE\nCollect all three bones before picking up the key.\n\nBRUTAL MODE\nHard mode rules, plus no revisiting any cell. Paw prints mark your path. Use Undo to take back a move or Restart to try again. Every puzzle has a verified route with no backtracking.", 18))
 	help_box.add_child(label("Drag Mocha along open paths, tap an adjacent tile, or use the direction buttons. On a keyboard, use arrow keys or WASD. Hedges block movement.\n\nThe timer starts when the garden is generated and pauses while this page is open. Restart resets the current garden; New puzzle generates another.", 16))
+	help_box.add_child(label("Created by Frankie, Timothy, Han and Colin.", 18))
 	help_cover.hide()
 	scroll.show()
 	get_node("/root/GPX").pause_changed.connect(_paused)
@@ -393,7 +404,7 @@ func _process(delta: float) -> void:
 
 func _update_timer() -> void:
 	var seconds := int(elapsed)
-	timer_label.text = "%02d:%02d" % [int(seconds / 60.0), seconds % 60]
+	timer_label.text = "(%d seconds)" % seconds
 
 func _show_help() -> void:
 	scroll.hide()

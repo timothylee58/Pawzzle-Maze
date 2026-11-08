@@ -143,7 +143,7 @@ func run() -> void:
 				if state.key and state.mask != 7: valid_order = false
 			check(not path.is_empty() and game.rules.won(level, state) and valid_order, "hard solvable and ordered size %d sample %d" % [n, sample])
 
-	check(game.timer_label.text == "00:00", "timer has no prefix")
+	check(game.timer_label.text == "(0 seconds)", "timer displays elapsed seconds")
 	for n in range(5, 15):
 		for sample in 100:
 			for hard in [false, true]:
