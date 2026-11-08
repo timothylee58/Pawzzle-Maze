@@ -60,7 +60,7 @@ func run() -> void:
 	for to in route: game.step(to)
 	check(game.overlay.visible and game.rules.won(game.level, game.state), "complete puzzle")
 	check(not game.timer_running, "timer stops at win")
-	check(game.minimum_label.text == "Minimum steps: %d" % route.size(), "sidebar displays start optimum")
+	check(game.minimum_label.text == "Minimum steps to win: %d" % route.size(), "sidebar displays start optimum")
 	check(game.result.text.contains("Your steps: %d" % route.size()) and game.result.text.contains("Minimum steps: %d" % route.size()) and game.result.text.contains("Perfect route!"), "completion compares actual and minimum steps")
 	check(game.saves.bests[game.best_key()] == route.size(), "best stored")
 	game.saves = {"bests": {}, "muted": false}
@@ -108,9 +108,9 @@ func run() -> void:
 	gpx.set_pause_reason("browser", true)
 	gpx.set_pause_reason("browser", false)
 	check(AudioServer.is_bus_mute(0), "mute survives pause")
-	check(game.size_select.item_count == 10, "sizes 5 through 14")
+	check(game.size_select.item_count == 6, "sizes 5 through 10")
 	check(game.sidebar.get_child_count() == 1, "checklist removed")
-	for n in range(5, 15):
+	for n in range(5, 11):
 		game.size_select.select(n - 5)
 		game.generate()
 		check(is_equal_approx(game.board.cell_size * n, game.board.board_rect.size.x) and game.board.board_rect.end.x <= game.board.size.x and game.board.board_rect.end.y <= game.board.size.y, "entire grid fits size %d" % n)

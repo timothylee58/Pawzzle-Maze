@@ -358,3 +358,46 @@ and uses compact checklist padding with readable text.
   8 November 2026 with current rules and Frankie, Timothy, Han and Colin credited.
   Public-description synchronization remains pending GamePix support.
 - GamePix accepted build 3Lo9eclQK2QqKqoIj92erlt1Huw; submitted the size-cap update.
+
+## Participant-guide audit - 8 November 2026
+
+Reviewed all 13 pages of the supplied Xsolla participant guide and the live
+jam, submission dashboard, release archive and source. This is a verification
+record, not an organizer eligibility decision.
+
+Confirmed:
+- Godot browser game with AI-assisted development; website publishing is the
+  guide's supported Option B, so Xsolla MCP publishing is not mandatory.
+- Game AE5L7D is SUBMITTED to xsolla-game-jam-7-nov and publicly listed/playable.
+  Public player serves build 3Lo9eclQK2QqKqoIj92erlt1Huw.
+- Title, All orientation, desktop/mobile flags, Godot engine and SDK flag saved.
+  Four tags: puzzle, vibe-coded, animal, casual.
+- Editorial description is 446 characters; how-to-play is 417 characters.
+- Icon and cover displayed in Assets. Source PNGs are 512x512 / 116,122 bytes
+  and 1360x850 / 227,167 bytes, within guide limits.
+- Release ZIP is 13,124,251 bytes, valid, index.html at root, no backslash paths.
+- GitHub collaborators: nahiphog, timothylee58, frankiekyt, colintcm.
+- SDK handles loading/loaded/start, SDK pause/resume and document visibility;
+  the Godot bridge freezes the scene and preserves mute state.
+- Fresh verification: 41,477 integration, 14,486 Brutal, 2,674 BFS and 18,100
+  parity checks, plus eight SDK tests, all pass (76,745 total).
+  Updated only stale test expectations for the approved six-size selector and
+  Minimum steps to win label. No runtime or published-build change in this audit.
+- Release credential-pattern scan found no token candidates. Private-key header
+  marker strings in the engine WASM were not followed by PEM key bodies;
+  this limited scan is not a comprehensive security audit.
+
+Outstanding or outside verification:
+- Public description still serves old text and omits the team names despite
+  correct Editorial text. Support email sent; no response found at audit time.
+- Physical iOS/Android, Safari and actual ad playback are not verified.
+- Registered-email eligibility, Discord membership, organizer-issued AI key
+  setup/check, attendance/show-and-tell and post-event feedback are not proven
+  by the game submission. Do not treat those as verified or as inferred failures.
+- Guide dates contain errors. Use the user's confirmed 8 November 2026, 13:00
+  Malaysia deadline; the live countdown also differs. Submission is already in.
+- The guide contains no additional theme, judging rubric, mandatory video,
+  monetization, or ads.txt requirement. Video/FAQ fields are optional in UI.
+- Root https://timothylee58.github.io/ads.txt now serves the GamePix snippet
+  (property marker 0INL7). GamePix property verification itself was not checked;
+  this publisher monetization task is separate from jam entry submission.
